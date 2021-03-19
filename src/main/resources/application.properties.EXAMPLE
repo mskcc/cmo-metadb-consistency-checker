@@ -1,0 +1,25 @@
+# spring web server port
+server.port=
+
+# nats server
+nats.clusterid=
+nats.clientid=
+nats.url=
+
+# messaging configuration
+igo.new_request_topic=
+metadb.new_request_consistency_check_topic=
+metadb.cmo_new_request_topic=
+
+# threading
+num.new_request_handler_threads=
+num.consistency_checker_handler_threads=
+
+# messaging time threshold in seconds (default is 5 minutes)
+messaging.time_threshold_seconds=
+
+# publishing failures filepath
+metadb.publishing_failures_filepath=
+
+# detailed consistency checking logger filepath
+consistency_checker.request_handling_failures_filepath=
