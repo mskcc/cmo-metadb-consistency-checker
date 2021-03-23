@@ -1,0 +1,18 @@
+# spring web server port
+server.port=
+
+# nats server
+nats.clusterid=
+nats.clientid=
+nats.url=
+
+# messaging configuration
+igo.new_request_topic=
+num.new_request_handler_threads=
+consistency_check.new_request_topic=
+
+# messaging failures filepath
+cc_metadb.publishing_failures_filepath=
+
+# request handling failure filepath
+cc_metadb.request_handling_failures_filepath=

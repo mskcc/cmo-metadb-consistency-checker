@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.mskcc.cmo.metadb</groupId>
   <artifactId>master</artifactId>
-  <packaging>pom</packaging>
+  <packaging>jar</packaging>
   <name>MSKCC CMO MetaDB Consistency Checker</name>
   <version>0.1.0</version>
   <description>master maven module</description>
@@ -65,8 +65,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-test</artifactId>
+      <version>${spring.version}</version>
       <scope>test</scope>
     </dependency>
     <!-- jackson -->
@@ -81,9 +82,43 @@
       <artifactId>cmo-metadb-common</artifactId>
       <version>${cmo_metadb_common.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.skyscreamer</groupId>
+      <artifactId>jsonassert</artifactId>
+      <version>1.5.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>3.3.3</version>
+      <scope>test</scope>
+      <type>jar</type>
+    </dependency>
   </dependencies>
 
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+        <includes>
+          <include>*.properties</include>
+        </includes>
+        <excludes>
+          <exclude>*.properties.EXAMPLE</exclude>
+        </excludes>
+      </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>false</filtering>
+        <includes>
+          <include>*.properties</include>
+        </includes>
+        <excludes>
+          <exclude>*.properties.EXAMPLE</exclude>
+        </excludes>
+      </resource>
+    </resources>
     <plugins>
       <!-- maven compiler plugin -->
       <plugin>
@@ -133,7 +168,7 @@
         <configuration>
           <mainClass>org.mskcc.cmo.metadb.ConsistencyCheckerApp</mainClass>
         </configuration>
-      </plugin>      
+      </plugin>
     </plugins>
   </build>
 </project>
