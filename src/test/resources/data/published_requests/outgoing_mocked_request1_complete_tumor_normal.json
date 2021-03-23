@@ -25,7 +25,7 @@
     "qcAccessEmails": "", 
     "recipe": "GENESET101", 
     "requestId": "MOCKREQUEST1_B", 
-    "requestMetaDbId": "6cc9f987-875a-11eb-ada3-acde48001122", 
+    "metaDbRequestId": "6cc9f987-875a-11eb-ada3-acde48001122", 
     "samples": [
         {
             "baitSet": "GENESET101_BAITS", 
