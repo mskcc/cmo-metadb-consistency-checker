@@ -8,11 +8,15 @@ nats.url=
 
 # messaging configuration
 igo.new_request_topic=
+metadb.new_request_consistency_check_topic=
+metadb.cmo_new_request_topic=
+
+# threading
 num.new_request_handler_threads=
-consistency_check.new_request_topic=
+num.consistency_checker_handler_threads=
 
-# messaging failures filepath
-cc_metadb.publishing_failures_filepath=
+# publishing failures filepath
+metadb.publishing_failures_filepath=
 
-# request handling failure filepath
-cc_metadb.request_handling_failures_filepath=
+# detailed consistency checking logger filepath
+consistency_checker.request_handling_failures_filepath=

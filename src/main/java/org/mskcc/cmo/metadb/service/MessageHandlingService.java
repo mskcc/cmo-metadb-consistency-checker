@@ -1,5 +1,8 @@
 package org.mskcc.cmo.metadb.service;
 
+import org.mskcc.cmo.messaging.Gateway;
+import org.mskcc.cmo.metadb.logger.ConsistencyCheckerLogger;
+
 /**
  * ****************************************************************
  *         DO NOT BEGIN YET UNTIL UTIL IS COMPLETE
@@ -19,4 +22,8 @@ package org.mskcc.cmo.metadb.service;
  *              Graph DB itself.
  */
 public interface MessageHandlingService {
+    void initialize(Gateway gateway) throws Exception;
+    void newIgoRequestHandler(ConsistencyCheckerLogger request) throws Exception;
+    void newRequestConsistencyCheckerHandler(ConsistencyCheckerLogger request) throws Exception;
+    void shutdown() throws Exception;
 }

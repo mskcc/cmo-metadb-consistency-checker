@@ -24,12 +24,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class ConsistencyCheckerUtil {
 
-    @Autowired
-    private FileUtil fileUtil;
-
-    @Value("${metadb.consistency_checker_failures_filepath}")
-    private String metadbCheckerFailuresFilepath;
-
     private final ObjectMapper mapper = new ObjectMapper();
     private final String[] DEFAULT_IGNORED_FIELDS = new String[]{
         "metaDbRequestId",
@@ -52,7 +46,7 @@ public class ConsistencyCheckerUtil {
      * @return boolean
      * @throws Exception
      */
-    public boolean isConsistent(String referenceJson, String targetJson,
+    public Boolean isConsistent(String referenceJson, String targetJson,
             String[] ignoredFields) throws Exception {
         //File loggerFile = fileUtil.getOrCreateFileWithHeader(metadbCheckerFailuresFilepath,
         //CONSISTENCY_CHECKER_FAILURES_FILE_HEADER);
@@ -79,8 +73,18 @@ public class ConsistencyCheckerUtil {
         return assertResponse;
     }
 
-    public boolean isConsistent(String referenceJson, String targetJson) throws Exception {
+    public Boolean isConsistent(String referenceJson, String targetJson) throws Exception {
         return isConsistent(referenceJson, targetJson, DEFAULT_IGNORED_FIELDS);
+    }
+
+    /**
+     * TODO?
+     * @param referenceJson
+     * @param targetJson
+     * @return
+     */
+    public Object getJsonDiffs(String referenceJson, String targetJson) {
+        throw new UnsupportedOperationException("Method not supported yet");
     }
 
     /**
