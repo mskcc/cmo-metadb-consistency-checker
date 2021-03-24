@@ -6,9 +6,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication(scanBasePackages = {"org.mskcc.cmo.common.*"})
-public class ConsistencyCheckerApp implements CommandLineRunner{
-    
-    // will configure this to autowire properly later.. 
+public class ConsistencyCheckerApp implements CommandLineRunner {
+
+    // will configure this to autowire properly later..
     private ConsistencyCheckerUtil util = new ConsistencyCheckerUtil();
 
     public static void main(String[] args) {

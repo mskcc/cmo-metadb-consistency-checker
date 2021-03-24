@@ -92,13 +92,42 @@ public class ConsistencyCheckerUtilTest {
      * Does the unit test pass or fail?
      * @param errorsMap
      */
+    @Test(expected = AssertionError.class)
+    public void testNullJsonFieldHandlingInPublishedRequest() throws Exception {
+        MockJsonTestData incomingRequest = mockedRequestJsonDataMap.get("mockIncomingRequest1JsonDataWith2T2N");
+        MockJsonTestData publishedRequest = mockedRequestJsonDataMap.get("mockPublishedRequest1JsonNullValues");
+        try {
+            System.out.println("\n\n\n");
+            Boolean consistencyCheckStatus = consistencyCheckerUtil.isConsistent(incomingRequest.getJsonString(), publishedRequest.getJsonString());
+                Assert.assertFalse(incomingRequest.getIdentifier() + "\tRequest did not pass consistency check but no exception was caught.", consistencyCheckStatus);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println(incomingRequest.getIdentifier() + "\t" + e.getMessage());
+        }
+    }
+
+    /**
+     * Test for handling of null fields.
+     *
+     * Use some of the MockJsonData objects from the mockedRequestJsonDataMap and override some
+     * random fields to null. i.e., mockRequest.setRunDate(null);
+     * Does the unit test pass or fail?
+     * @param errorsMap
+     */
     @Test
-    public void testNullJsonFieldHandling() throws Exception {
-        // copy what's in testAllRequestJsonsForConsistency() above
-        // but when you get request objects from the mockedRequestJsonDataMap
-        // just override some fields as Null
-        // if test fails then update 'filterJsonNode()' method in the consistency checker class
-        // to also remove elements from the JsonNode if they are empty strings or null
+    public void testNullOrEmptyJsonFieldHandlingInIncomingAndPublishedRequest() throws Exception {
+        MockJsonTestData incomingRequest = mockedRequestJsonDataMap.get("mockIncomingRequest4JsonNullOrEmptyValues");
+        MockJsonTestData publishedRequest = mockedRequestJsonDataMap.get("mockPublishedRequest4JsonNullOrEmptyValues");
+        try {
+            //System.out.println("\n\n\n");
+            Boolean consistencyCheckStatus = consistencyCheckerUtil.isConsistent(incomingRequest.getJsonString(), publishedRequest.getJsonString());
+            if(!consistencyCheckStatus) {
+                System.out.println(incomingRequest.getIdentifier() + "\tRequest did not pass consistency check but no exception was caught.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println(incomingRequest.getIdentifier() + "\t" + e.getMessage());
+        }
     }
 
     private void printErrors(Map<String, String> errorsMap) {
