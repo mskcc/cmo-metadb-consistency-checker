@@ -8,7 +8,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication(scanBasePackages = {"org.mskcc.cmo.common.*", "org.mskcc.cmo.messaging"})
+@SpringBootApplication(scanBasePackages = {"org.mskcc.cmo.messaging",
+        "org.mskcc.cmo.common.*", "org.mskcc.cmo.metadb.*"})
 public class ConsistencyCheckerApp implements CommandLineRunner {
 
     @Autowired
@@ -19,7 +20,6 @@ public class ConsistencyCheckerApp implements CommandLineRunner {
 
     private Thread shutdownHook;
     final CountDownLatch consistencyCheckerAppClose = new CountDownLatch(1);
-
 
     @Override
     public void run(String... args) throws Exception {

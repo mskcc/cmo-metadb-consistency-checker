@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 import org.mskcc.cmo.common.FileUtil;
 import org.mskcc.cmo.messaging.Gateway;
 import org.mskcc.cmo.messaging.MessageConsumer;
-import org.mskcc.cmo.metadb.logger.ConsistencyCheckerLogger;
+import org.mskcc.cmo.metadb.model.ConsistencyCheckerRequest;
 import org.mskcc.cmo.metadb.service.MessageHandlingService;
 import org.mskcc.cmo.metadb.util.ConsistencyCheckerUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,14 +56,14 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
     @Autowired
     private ConsistencyCheckerUtil consistencyCheckerUtil;
 
-    private Map<String, ConsistencyCheckerLogger> igoNewRequestMessagesReceived = new HashMap<>();
-    private Map<String, ConsistencyCheckerLogger> cmoNewRequestConsistencyCheckMessagesReceived = new HashMap<>();
+    private Map<String, ConsistencyCheckerRequest> igoNewRequestMessagesReceived = new HashMap<>();
+    private Map<String, ConsistencyCheckerRequest> metadbRequestConsistencyCheckerMessagesReceived = new HashMap<>();
 
-    private static final BlockingQueue<ConsistencyCheckerLogger> requestConsistencyCheckingQueue =
-        new LinkedBlockingQueue<ConsistencyCheckerLogger>();
+    private static final BlockingQueue<ConsistencyCheckerRequest> requestConsistencyCheckingQueue =
+        new LinkedBlockingQueue<ConsistencyCheckerRequest>();
 
-    private static final BlockingQueue<ConsistencyCheckerLogger> requestPublishingQueue =
-    new LinkedBlockingQueue<ConsistencyCheckerLogger>();
+    private static final BlockingQueue<ConsistencyCheckerRequest> requestPublishingQueue =
+    new LinkedBlockingQueue<ConsistencyCheckerRequest>();
     private static CountDownLatch consistencyCheckerHandlerShutdownLatch;
     private static CountDownLatch newRequestHandlerShutdownLatch;
 
@@ -77,6 +77,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
     public void initialize(Gateway gateway) throws Exception {
         if (!initialized) {
             messagingGateway = gateway;
+            setupMetaDbRequestConsistencyCheckerHandler(messagingGateway, this);
             setupIgoNewRequestHandler(messagingGateway, this);
             initializeNewRequestHandlers();
             initialized = true;
@@ -99,7 +100,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
         final Phaser consistencyCheckerPhaser = new Phaser();
         for (int lc = 0; lc < NUM_CONSISTENCY_CHECKER_HANDLERS; lc++) {
             consistencyCheckerPhaser.register();
-            exec.execute(new ConsistencyCheckerHandler(newRequestPhaser));
+            exec.execute(new ConsistencyCheckerHandler(consistencyCheckerPhaser));
         }
         consistencyCheckerPhaser.arriveAndAwaitAdvance();
     }
@@ -110,7 +111,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
     }
 
     @Override
-    public void newIgoRequestHandler(ConsistencyCheckerLogger request) throws Exception {
+    public void newIgoRequestHandler(ConsistencyCheckerRequest request) throws Exception {
         if (!initialized) {
             throw new IllegalStateException("Message Handling Service has not been initialized");
         }
@@ -126,14 +127,16 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
         throws Exception {
         gateway.subscribe(IGO_NEW_REQUEST_TOPIC, Object.class, new MessageConsumer() {
             public void onMessage(Object message) {
+                System.out.println("RECEIVED MESSAGE ON TOPIC " + IGO_NEW_REQUEST_TOPIC);
                 try {
                     String todaysDate = "current date YYYY/MM/DD";
                     String incomingRequestJson = message.toString();
                     String incomingTimestamp = "current timestamp when subscribe received message (YYYY/MM/DD + HH:MM:SS)";
                     String requestId = getRequestIdFromRequestJson(incomingRequestJson);
 
-                    ConsistencyCheckerLogger request = new ConsistencyCheckerLogger(todaysDate, IGO_NEW_REQUEST_TOPIC,
+                    ConsistencyCheckerRequest request = new ConsistencyCheckerRequest(todaysDate, IGO_NEW_REQUEST_TOPIC,
                             requestId, incomingTimestamp, incomingRequestJson);
+                    System.out.println("Adding request to 'igoNewRequestMessagesReceived': " + request.getRequestId());
                     messageHandlingService.newIgoRequestHandler(request);
                 } catch (Exception e) {
                     System.err.printf("Cannot process IGO_NEW_REQUEST:\n%s\n", message);
@@ -145,31 +148,33 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
     }
 
     @Override
-    public void newRequestConsistencyCheckerHandler(ConsistencyCheckerLogger request) throws Exception {
+    public void newMetaDbRequestConsistencyCheckerHandler(ConsistencyCheckerRequest request) throws Exception {
         if (!initialized) {
             throw new IllegalStateException("Message Handling Service has not been initialized");
         }
         if (!shutdownInitiated) {
-            cmoNewRequestConsistencyCheckMessagesReceived.put(request.getRequestId(), request);
+            metadbRequestConsistencyCheckerMessagesReceived.put(request.getRequestId(), request);
         } else {
             System.err.printf("Shutdown initiated, not accepting request: %s\n", request);
             throw new IllegalStateException("Shutdown initiated, not handling any more requests");
         }
     }
 
-    private void setupNewRequestConsistencyCheckerHandler(Gateway gateway, MessageHandlingService messageHandlingService)
+    private void setupMetaDbRequestConsistencyCheckerHandler(Gateway gateway, MessageHandlingService messageHandlingService)
         throws Exception {
         gateway.subscribe(NEW_REQUEST_CONSISTENCY_CHECK_TOPIC, Object.class, new MessageConsumer() {
             public void onMessage(Object message) {
+                System.out.println("RECEIVED MESSAGE ON TOPIC " + NEW_REQUEST_CONSISTENCY_CHECK_TOPIC);
                 try {
                     String todaysDate = "current date YYYY/MM/DD";
                     String incomingRequestJson = message.toString();
                     String incomingTimestamp = "current timestamp when subscribe received message (YYYY/MM/DD + HH:MM:SS)";
                     String requestId = getRequestIdFromRequestJson(incomingRequestJson);
 
-                    ConsistencyCheckerLogger request = new ConsistencyCheckerLogger(todaysDate, NEW_REQUEST_CONSISTENCY_CHECK_TOPIC,
+                    ConsistencyCheckerRequest request = new ConsistencyCheckerRequest(todaysDate, NEW_REQUEST_CONSISTENCY_CHECK_TOPIC,
                             requestId, incomingTimestamp, incomingRequestJson);
-                    messageHandlingService.newRequestConsistencyCheckerHandler(request);
+                    System.out.println("Adding request to 'metadbRequestConsistencyCheckerMessagesReceived': " + request.getRequestId());
+                    messageHandlingService.newMetaDbRequestConsistencyCheckerHandler(request);
                 } catch (Exception e) {
                     System.err.printf("Cannot process IGO_NEW_REQUEST:\n%s\n", message);
                     System.err.printf("Exception during processing:\n%s\n", e.getMessage());
@@ -188,19 +193,22 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
      */
     private void addRequestsToConsistencyCheckerQueue() {
         for (String incomingRequestId : igoNewRequestMessagesReceived.keySet()) {
-            ConsistencyCheckerLogger igoNewRequest = igoNewRequestMessagesReceived.remove(incomingRequestId);
-            if (cmoNewRequestConsistencyCheckMessagesReceived.containsKey(incomingRequestId)) {
+            System.out.println("Checking if request is ready for consistency checking: " + incomingRequestId);
+            ConsistencyCheckerRequest igoNewRequest = igoNewRequestMessagesReceived.get(incomingRequestId);
+            if (metadbRequestConsistencyCheckerMessagesReceived.containsKey(incomingRequestId)) {
                 // add to consistency checking queue if request is in both sets of
                 // messages received
+                System.out.println("Found same request in both queues: " + incomingRequestId);
 
                 // not removing from map because we want to use the incoming timestamp to determine
                 // whether message took longer than expected to receive from CMO_NEW_REQUEST_CONSISTENCY_CHECKER
                 // this request will be removed when it is published to CMO_NEW_REQUEST
-                ConsistencyCheckerLogger metadbConsistencyCheckRequest = cmoNewRequestConsistencyCheckMessagesReceived.get(incomingRequestId);
+                ConsistencyCheckerRequest metadbConsistencyCheckRequest = metadbRequestConsistencyCheckerMessagesReceived.get(incomingRequestId);
                 igoNewRequest.setOutgoingJson(metadbConsistencyCheckRequest.getIncomingJson());
 
                 // request object now has date, incoming timestamp, incoming json, outgoing json, and topic
                 // topic is from the igo new request message received
+                igoNewRequestMessagesReceived.remove(incomingRequestId);
                 requestConsistencyCheckingQueue.add(igoNewRequest);
             } else {
                 // have not gotten the cmo metadb request for consistency checking yet
@@ -209,10 +217,10 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                 // if so then assume dropped?
                 // if status is already set as StatusType.FAILED_DROPPED_MESSAGE then assume
                 // we already know that the message has been dropped, no need to log it again
-                if (igoNewRequest.getStatusType().equals(ConsistencyCheckerLogger.StatusType.FAILED_DROPPED_MESSAGE)) {
+                if (igoNewRequest.getStatusType().equals(ConsistencyCheckerRequest.StatusType.FAILED_DROPPED_MESSAGE)) {
                     continue;
                 }
-                igoNewRequest.setStatusType(ConsistencyCheckerLogger.StatusType.FAILED_DROPPED_MESSAGE);
+                igoNewRequest.setStatusType(ConsistencyCheckerRequest.StatusType.FAILED_DROPPED_MESSAGE);
                 igoNewRequestMessagesReceived.put(incomingRequestId, igoNewRequest); // update key-value in map
                 try {
                     File loggerFile = fileUtil.getOrCreateFileWithHeader(consistencyCheckerFailuresFilepath,
@@ -257,8 +265,9 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
             phaser.arrive();
             while (true) {
                 try {
-                    ConsistencyCheckerLogger request = requestPublishingQueue.poll(100, TimeUnit.MILLISECONDS);
+                    ConsistencyCheckerRequest request = requestPublishingQueue.poll(100, TimeUnit.MILLISECONDS);
                     if (request != null) {
+                        System.out.println("Request is ready for publishing: " + request.getRequestId());
                         messagingGateway.publish(CMO_NEW_REQUEST_TOPIC, request.getOutgoingJson());
                         request.setOutgoingTimestamp("outgoing timestamp");
                         // check difference between incoming timestamp and outgoing
@@ -268,6 +277,10 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                         //    request.setStatusType(ConsistencyCheckerLogger.StatusType.SUCCESSFUL_PUBLISHING_TIME_EXCEEDED);
                         //    request.setTopic(CMO_NEW_REQUEST_TOPIC)  if the time exceeded to publish
                         //}
+
+                        // remove request from consistency check messages received
+                        System.out.println("Removing request from consistency check messages received: " + request.getRequestId());
+                        metadbRequestConsistencyCheckerMessagesReceived.remove(request.getRequestId());
 
                         // save request details to logger file
                         // request details should have everything now..
@@ -309,19 +322,22 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
         public void run() {
             phaser.arrive();
             while (true) {
-                addRequestsToConsistencyCheckerQueue();
                 try {
-                    ConsistencyCheckerLogger requestsToCheck = requestConsistencyCheckingQueue.poll(100, TimeUnit.MILLISECONDS);
+                    addRequestsToConsistencyCheckerQueue();
+                    ConsistencyCheckerRequest requestsToCheck = requestConsistencyCheckingQueue.poll(100, TimeUnit.MILLISECONDS);
                     if (requestsToCheck != null) {
+                        System.out.println("Consistency checking request received: " + requestsToCheck.getRequestId());
                         // consistency check the requests
                         Boolean passedConsistencyCheck = consistencyCheckerUtil.isConsistent(requestsToCheck.getIncomingJson(),
                                 requestsToCheck.getOutgoingJson());
                         if (passedConsistencyCheck) {
-                            requestsToCheck.setStatusType(ConsistencyCheckerLogger.StatusType.SUCCESSFUL);
+                            System.out.println("Passed consistency check, marking request as passed and adding to request publishing queue");
+                            requestsToCheck.setStatusType(ConsistencyCheckerRequest.StatusType.SUCCESSFUL);
                             // only add request to publishing queue if it passed the consistency check
                             requestPublishingQueue.add(requestsToCheck);
                         } else {
-                            requestsToCheck.setStatusType(ConsistencyCheckerLogger.StatusType.FAILED_INCONSISTENT_REQUEST_JSONS);
+                            System.out.println("request FAILED consistency check: " + requestsToCheck.getRequestId());
+                            requestsToCheck.setStatusType(ConsistencyCheckerRequest.StatusType.FAILED_INCONSISTENT_REQUEST_JSONS);
                             // save details to publishing failure logger
                             File loggerFile = fileUtil.getOrCreateFileWithHeader(consistencyCheckerFailuresFilepath,
                                     requestsToCheck.getConsistencyCheckerFileHeader());

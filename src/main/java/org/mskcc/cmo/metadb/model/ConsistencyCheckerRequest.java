@@ -1,4 +1,4 @@
-package org.mskcc.cmo.metadb.logger;
+package org.mskcc.cmo.metadb.model;
 
 import java.util.Arrays;
 import java.util.List;
@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils;
  *
  * @author ochoaa
  */
-public class ConsistencyCheckerLogger {
+public class ConsistencyCheckerRequest {
     public enum StatusType {
         SUCCESSFUL,
         SUCCESSFUL_PUBLISHING_TIME_EXCEEDED,
@@ -26,9 +26,9 @@ public class ConsistencyCheckerLogger {
     private String incomingJson;
     private String outgoingJson;
 
-    public ConsistencyCheckerLogger() {}
+    public ConsistencyCheckerRequest() {}
 
-    public ConsistencyCheckerLogger(String date, String topic, String requestId, String incomingTimestamp, String incomingJson) {
+    public ConsistencyCheckerRequest(String date, String topic, String requestId, String incomingTimestamp, String incomingJson) {
         this.date = date;
         this.topic = topic;
         this.requestId = requestId;
@@ -36,7 +36,7 @@ public class ConsistencyCheckerLogger {
         this.incomingJson = incomingJson;
     }
 
-    public ConsistencyCheckerLogger(String date, String requestId, StatusType statusType, String incomingTimestamp, String outgoingTimestamp,
+    public ConsistencyCheckerRequest(String date, String requestId, StatusType statusType, String incomingTimestamp, String outgoingTimestamp,
             String topic, String incomingJson, String outgoingJson) {
         this.date = date;
         this.requestId = requestId;

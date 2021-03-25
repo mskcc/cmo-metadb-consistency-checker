@@ -1,7 +1,7 @@
 package org.mskcc.cmo.metadb.service;
 
 import org.mskcc.cmo.messaging.Gateway;
-import org.mskcc.cmo.metadb.logger.ConsistencyCheckerLogger;
+import org.mskcc.cmo.metadb.model.ConsistencyCheckerRequest;
 
 /**
  * ****************************************************************
@@ -23,7 +23,7 @@ import org.mskcc.cmo.metadb.logger.ConsistencyCheckerLogger;
  */
 public interface MessageHandlingService {
     void initialize(Gateway gateway) throws Exception;
-    void newIgoRequestHandler(ConsistencyCheckerLogger request) throws Exception;
-    void newRequestConsistencyCheckerHandler(ConsistencyCheckerLogger request) throws Exception;
+    void newIgoRequestHandler(ConsistencyCheckerRequest request) throws Exception;
+    void newMetaDbRequestConsistencyCheckerHandler(ConsistencyCheckerRequest request) throws Exception;
     void shutdown() throws Exception;
 }
