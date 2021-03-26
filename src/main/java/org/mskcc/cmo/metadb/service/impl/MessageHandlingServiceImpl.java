@@ -4,6 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -129,9 +133,9 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
             public void onMessage(Object message) {
                 System.out.println("RECEIVED MESSAGE ON TOPIC " + IGO_NEW_REQUEST_TOPIC);
                 try {
-                    String todaysDate = "current date YYYY/MM/DD";
+                    String todaysDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE).toString();
                     String incomingRequestJson = message.toString();
-                    String incomingTimestamp = "current timestamp when subscribe received message (YYYY/MM/DD + HH:MM:SS)";
+                    String incomingTimestamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
                     String requestId = getRequestIdFromRequestJson(incomingRequestJson);
 
                     ConsistencyCheckerRequest request = new ConsistencyCheckerRequest(todaysDate, IGO_NEW_REQUEST_TOPIC,
@@ -166,9 +170,9 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
             public void onMessage(Object message) {
                 System.out.println("RECEIVED MESSAGE ON TOPIC " + NEW_REQUEST_CONSISTENCY_CHECK_TOPIC);
                 try {
-                    String todaysDate = "current date YYYY/MM/DD";
+                    String todaysDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE).toString();
                     String incomingRequestJson = message.toString();
-                    String incomingTimestamp = "current timestamp when subscribe received message (YYYY/MM/DD + HH:MM:SS)";
+                    String incomingTimestamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
                     String requestId = getRequestIdFromRequestJson(incomingRequestJson);
 
                     ConsistencyCheckerRequest request = new ConsistencyCheckerRequest(todaysDate, NEW_REQUEST_CONSISTENCY_CHECK_TOPIC,
@@ -199,13 +203,11 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                 // add to consistency checking queue if request is in both sets of
                 // messages received
                 System.out.println("Found same request in both queues: " + incomingRequestId);
-
                 // not removing from map because we want to use the incoming timestamp to determine
                 // whether message took longer than expected to receive from CMO_NEW_REQUEST_CONSISTENCY_CHECKER
                 // this request will be removed when it is published to CMO_NEW_REQUEST
                 ConsistencyCheckerRequest metadbConsistencyCheckRequest = metadbRequestConsistencyCheckerMessagesReceived.get(incomingRequestId);
                 igoNewRequest.setOutgoingJson(metadbConsistencyCheckRequest.getIncomingJson());
-
                 // request object now has date, incoming timestamp, incoming json, outgoing json, and topic
                 // topic is from the igo new request message received
                 igoNewRequestMessagesReceived.remove(incomingRequestId);
