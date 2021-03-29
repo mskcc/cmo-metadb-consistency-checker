@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -18,6 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
+import org.apache.log4j.Logger;
 import org.mskcc.cmo.common.FileUtil;
 import org.mskcc.cmo.messaging.Gateway;
 import org.mskcc.cmo.messaging.MessageConsumer;
@@ -35,6 +35,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class MessageHandlingServiceImpl implements MessageHandlingService {
+    private final Logger LOG = Logger.getLogger(MessageHandlingServiceImpl.class);
 
     @Autowired
     private FileUtil fileUtil;
@@ -125,7 +126,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
         if (!shutdownInitiated) {
             igoNewRequestMessagesReceived.put(request.getRequestId(), request);
         } else {
-            System.err.printf("Shutdown initiated, not accepting request: %s\n", request);
+            LOG.warn("Shutdown initiated, not accepting request: " + request);
             throw new IllegalStateException("Shutdown initiated, not handling any more requests");
         }
     }
@@ -134,21 +135,21 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
         throws Exception {
         gateway.subscribe(IGO_NEW_REQUEST_TOPIC, Object.class, new MessageConsumer() {
             public void onMessage(Object message) {
-                System.out.println("RECEIVED MESSAGE ON TOPIC " + IGO_NEW_REQUEST_TOPIC);
+                LOG.info("Received message on topic: " + IGO_NEW_REQUEST_TOPIC);
+                LOG.debug("Message contents: \n" + message.toString() + "\n");
                 try {
-                    String todaysDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE).toString();
+                    String todaysDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
                     String incomingRequestJson = message.toString();
                     String incomingTimestamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
                     String requestId = getRequestIdFromRequestJson(incomingRequestJson);
 
                     ConsistencyCheckerRequest request = new ConsistencyCheckerRequest(todaysDate, IGO_NEW_REQUEST_TOPIC,
                             requestId, incomingTimestamp, incomingRequestJson);
-                    System.out.println("Adding request to 'igoNewRequestMessagesReceived': " + request.getRequestId());
+
+                    LOG.info("Adding request to 'igoNewRequestMessagesReceived': " + request.getRequestId());
                     messageHandlingService.newIgoRequestHandler(request);
                 } catch (Exception e) {
-                    System.err.printf("Cannot process IGO_NEW_REQUEST:\n%s\n", message);
-                    System.err.printf("Exception during processing:\n%s\n", e.getMessage());
-                    e.printStackTrace();
+                    LOG.error("Unable to process IGO_NEW_REQUEST message:\n" + message.toString() + "\n", e);
                 }
             }
         });
@@ -171,7 +172,8 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
         throws Exception {
         gateway.subscribe(NEW_REQUEST_CONSISTENCY_CHECK_TOPIC, Object.class, new MessageConsumer() {
             public void onMessage(Object message) {
-                System.out.println("RECEIVED MESSAGE ON TOPIC " + NEW_REQUEST_CONSISTENCY_CHECK_TOPIC);
+                LOG.info("Received message on topic: " + NEW_REQUEST_CONSISTENCY_CHECK_TOPIC);
+                LOG.debug("Message contents: \n" + message.toString() + "\n");
                 try {
                     String todaysDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE).toString();
                     String incomingRequestJson = message.toString();
@@ -180,12 +182,10 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
 
                     ConsistencyCheckerRequest request = new ConsistencyCheckerRequest(todaysDate, NEW_REQUEST_CONSISTENCY_CHECK_TOPIC,
                             requestId, incomingTimestamp, incomingRequestJson);
-                    System.out.println("Adding request to 'metadbRequestConsistencyCheckerMessagesReceived': " + request.getRequestId());
+                    LOG.info("Adding request to 'metadbRequestConsistencyCheckerMessagesReceived': " + request.getRequestId());
                     messageHandlingService.newMetaDbRequestConsistencyCheckerHandler(request);
                 } catch (Exception e) {
-                    System.err.printf("Cannot process IGO_NEW_REQUEST:\n%s\n", message);
-                    System.err.printf("Exception during processing:\n%s\n", e.getMessage());
-                    e.printStackTrace();
+                    LOG.error("Unable to process NEW_REQUEST_CONSISTENCY_CHECK_TOPIC message:\n" + message.toString() + "\n", e);
                 }
             }
         });
@@ -201,12 +201,12 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
      */
     private void addRequestsToConsistencyCheckerQueue() throws ParseException {
         for (String incomingRequestId : igoNewRequestMessagesReceived.keySet()) {
-            System.out.println("Checking if request is ready for consistency checking: " + incomingRequestId);
+            LOG.debug("Checking if request is ready for consistency checking: " + incomingRequestId);
             ConsistencyCheckerRequest igoNewRequest = igoNewRequestMessagesReceived.get(incomingRequestId);
             if (metadbRequestConsistencyCheckerMessagesReceived.containsKey(incomingRequestId)) {
                 // add to consistency checking queue if request is in both sets of
                 // messages received
-                System.out.println("Found same request in both queues: " + incomingRequestId);
+                LOG.debug("Found same request in both queues: " + incomingRequestId);
                 // not removing from map because we want to use the incoming timestamp to determine
                 // whether message took longer than expected to receive from CMO_NEW_REQUEST_CONSISTENCY_CHECKER
                 // this request will be removed when it is published to CMO_NEW_REQUEST
@@ -238,8 +238,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                             igoNewRequest.getConsistencyCheckerFileHeader());
                     fileUtil.writeToFile(loggerFile, igoNewRequest.toString());
                 } catch (IOException e) {
-                    System.out.println("Error during attempt to write to metadb checker failures filepath");
-                    e.printStackTrace();
+                    LOG.error("Error occured during attempt to write to MetaDB consistency checker failures file", e);
                 }
             }
         }
@@ -278,7 +277,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                 try {
                     ConsistencyCheckerRequest request = requestPublishingQueue.poll(100, TimeUnit.MILLISECONDS);
                     if (request != null) {
-                        System.out.println("Request is ready for publishing: " + request.getRequestId());
+                        LOG.info("Publishing request to topic '" + CMO_NEW_REQUEST_TOPIC + "' with request id: " + request.getRequestId());
                         messagingGateway.publish(CMO_NEW_REQUEST_TOPIC, request.getOutgoingJson());
                         request.setOutgoingTimestamp("outgoing timestamp");
                         Date incomingtDate = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").parse(request.getIncomingTimestamp());
@@ -295,7 +294,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                         //}
 
                         // remove request from consistency check messages received
-                        System.out.println("Removing request from consistency check messages received: " + request.getRequestId());
+                        LOG.debug("Removing request from consistency check messages received: " + request.getRequestId());
                         metadbRequestConsistencyCheckerMessagesReceived.remove(request.getRequestId());
 
                         // save request details to logger file
@@ -310,8 +309,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                 } catch (InterruptedException e) {
                     interrupted = true;
                 } catch (Exception e) {
-                    System.err.printf("Error during consistency check: %s\n", e.getMessage());
-                    e.printStackTrace();
+                    LOG.error("Error encountered during publishing step", e);
                 }
                 newRequestHandlerShutdownLatch.countDown();
             }
@@ -342,17 +340,17 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                     addRequestsToConsistencyCheckerQueue();
                     ConsistencyCheckerRequest requestsToCheck = requestConsistencyCheckingQueue.poll(100, TimeUnit.MILLISECONDS);
                     if (requestsToCheck != null) {
-                        System.out.println("Consistency checking request received: " + requestsToCheck.getRequestId());
+                        LOG.info("Running consistency check on request: " + requestsToCheck.getRequestId());
                         // consistency check the requests
                         Boolean passedConsistencyCheck = consistencyCheckerUtil.isConsistent(requestsToCheck.getIncomingJson(),
                                 requestsToCheck.getOutgoingJson());
                         if (passedConsistencyCheck) {
-                            System.out.println("Passed consistency check, marking request as passed and adding to request publishing queue");
+                            LOG.info("Request passed consistency check and adding to publishing queue: " + requestsToCheck.getRequestId());
                             requestsToCheck.setStatusType(ConsistencyCheckerRequest.StatusType.SUCCESSFUL);
                             // only add request to publishing queue if it passed the consistency check
                             requestPublishingQueue.add(requestsToCheck);
                         } else {
-                            System.out.println("request FAILED consistency check: " + requestsToCheck.getRequestId());
+                            LOG.warn("Request failed consistency check: " + requestsToCheck.getRequestId() + ", storing details to consistency check failures log file");
                             requestsToCheck.setStatusType(ConsistencyCheckerRequest.StatusType.FAILED_INCONSISTENT_REQUEST_JSONS);
                             // save details to publishing failure logger
                             File loggerFile = fileUtil.getOrCreateFileWithHeader(consistencyCheckerFailuresFilepath,
@@ -366,8 +364,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                 } catch (InterruptedException e) {
                     interrupted = true;
                 } catch (Exception e) {
-                    System.err.printf("Error during consistency check: %s\n", e.getMessage());
-                    e.printStackTrace();
+                    LOG.error("Error encountered during consistency checking step", e);
                 }
             }
             consistencyCheckerHandlerShutdownLatch.countDown();
