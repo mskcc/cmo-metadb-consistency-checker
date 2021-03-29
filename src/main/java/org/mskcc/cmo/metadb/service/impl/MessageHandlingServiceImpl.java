@@ -20,6 +20,7 @@ import org.mskcc.cmo.common.FileUtil;
 import org.mskcc.cmo.messaging.Gateway;
 import org.mskcc.cmo.messaging.MessageConsumer;
 import org.mskcc.cmo.metadb.model.ConsistencyCheckerRequest;
+import org.mskcc.cmo.metadb.model.ConsistencyCheckerRequest.StatusType;
 import org.mskcc.cmo.metadb.service.MessageHandlingService;
 import org.mskcc.cmo.metadb.util.ConsistencyCheckerUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -194,8 +195,9 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
      * Removes request from 'igoNewRequestMessagesReceived' and adds to
      * 'requestConsistencyCheckingQueue'.
      * @return
+     * @throws ParseException 
      */
-    private void addRequestsToConsistencyCheckerQueue() {
+    private void addRequestsToConsistencyCheckerQueue() throws ParseException {
         for (String incomingRequestId : igoNewRequestMessagesReceived.keySet()) {
             System.out.println("Checking if request is ready for consistency checking: " + incomingRequestId);
             ConsistencyCheckerRequest igoNewRequest = igoNewRequestMessagesReceived.get(incomingRequestId);
@@ -208,6 +210,11 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                 // this request will be removed when it is published to CMO_NEW_REQUEST
                 ConsistencyCheckerRequest metadbConsistencyCheckRequest = metadbRequestConsistencyCheckerMessagesReceived.get(incomingRequestId);
                 igoNewRequest.setOutgoingJson(metadbConsistencyCheckRequest.getIncomingJson());
+                Date igoRequestDate = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").parse(igoNewRequest.getIncomingTimestamp());
+                Date metaDbRequestDate = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").parse(metadbConsistencyCheckRequest.getIncomingTimestamp());
+                if ((igoRequestDate.getTime() - metaDbRequestDate.getTime()) > 300) {
+                    igoNewRequest.setStatusType(StatusType.SUCCESSFUL_PUBLISHING_TIME_EXCEEDED);
+                }
                 // request object now has date, incoming timestamp, incoming json, outgoing json, and topic
                 // topic is from the igo new request message received
                 igoNewRequestMessagesReceived.remove(incomingRequestId);
@@ -272,6 +279,11 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                         System.out.println("Request is ready for publishing: " + request.getRequestId());
                         messagingGateway.publish(CMO_NEW_REQUEST_TOPIC, request.getOutgoingJson());
                         request.setOutgoingTimestamp("outgoing timestamp");
+                        Date incomingtDate = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").parse(request.getIncomingTimestamp());
+                        Date outgoingDate = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").parse(request.getOutgoingTimestamp());
+                        if ((outgoingDate.getTime() - incomingtDate.getTime()) > 300) {
+                            request.setStatusType(StatusType.SUCCESSFUL_PUBLISHING_TIME_EXCEEDED);
+                        }
                         // check difference between incoming timestamp and outgoing
                         // and override status type if the timestamp threshold is greater than expected
                         // time difference = (incoming timestamp - temp outgoing timestamp)
