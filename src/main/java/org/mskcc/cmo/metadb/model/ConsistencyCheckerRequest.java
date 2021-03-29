@@ -9,7 +9,22 @@ import org.apache.commons.lang3.StringUtils;
  * @author ochoaa
  */
 public class ConsistencyCheckerRequest {
-    public enum StatusType {
+    /**
+     * SUCCESSFUL: Consistency checker passed and no time delays. 
+     *      RequestJson is published to "cmo.new_request".
+     * SUCCESSFUL_PUBLISHING_TIME_EXCEEDED: Consistency checker passed but
+     *      MetaDb took longer than 300s to publish requestJson or
+     *      publishing requestJson to cmo.new_request took longer than 300s. 
+     *      RequestJson is published to "cmo.new_request".
+     * FAILED_INCONSISTENT_REQUEST_JSONS: Inconsistent JSON format or
+     *      missing attributes. RequestJson is not published to "cmo.new_request".
+     * FAILED_DROPPED_MESSAGE: Received requestJson from LIMS through "igo.new_request"
+     *      but never received requestJson from MetaDb through "metadb.new_request_consistency_check_topic". 
+     *      RequestJson is not published to "cmo.new_request".
+     * UNKNOWN_OR_INCONCLUSIVE: Inconclusive or unknown error consistency checking requestJson.
+     *      RequestJson is not published to "cmo.new_request".
+     */
+    public enum StatusType { 
         SUCCESSFUL,
         SUCCESSFUL_PUBLISHING_TIME_EXCEEDED,
         FAILED_INCONSISTENT_REQUEST_JSONS,
@@ -49,7 +64,7 @@ public class ConsistencyCheckerRequest {
     }
 
     public String getDate() {
-        return date == null ? "" : date;
+        return StringUtils.isBlank(date) ? "" : date;
     }
 
     public void setDate(String date) {
@@ -57,7 +72,7 @@ public class ConsistencyCheckerRequest {
     }
 
     public String getRequestId() {
-        return requestId == null ? "" : requestId;
+        return StringUtils.isBlank(requestId) ? "" : requestId;
     }
 
     public void setRequestId(String requestId) {
@@ -73,7 +88,7 @@ public class ConsistencyCheckerRequest {
     }
 
     public String getIncomingTimestamp() {
-        return incomingTimestamp == null ? "" : incomingTimestamp;
+        return StringUtils.isBlank(incomingTimestamp) ? "" : incomingTimestamp;
     }
 
     public void setIncomingTimestamp(String incomingTimestamp) {
@@ -81,7 +96,7 @@ public class ConsistencyCheckerRequest {
     }
 
     public String getOutgoingTimestamp() {
-        return outgoingTimestamp == null ? "" : outgoingTimestamp;
+        return StringUtils.isBlank(outgoingTimestamp) ? "" : outgoingTimestamp;
     }
 
     public void setOutgoingTimestamp(String outgoingTimestamp) {
@@ -89,7 +104,7 @@ public class ConsistencyCheckerRequest {
     }
 
     public String getTopic() {
-        return topic == null ? "" : topic;
+        return StringUtils.isBlank(topic) ? "" : topic;
     }
 
     public void setTopic(String topic) {
@@ -97,7 +112,7 @@ public class ConsistencyCheckerRequest {
     }
 
     public String getIncomingJson() {
-        return incomingJson == null ? "" : incomingJson;
+        return StringUtils.isBlank(incomingJson) ? "" : incomingJson;
     }
 
     public void setIncomingJson(String incomingJson) {
@@ -105,7 +120,7 @@ public class ConsistencyCheckerRequest {
     }
 
     public String getOutgoingJson() {
-        return outgoingJson == null ? "" : outgoingJson;
+        return StringUtils.isBlank(outgoingJson) ? "" : outgoingJson;
     }
 
     public void setOutgoingJson(String outgoingJson) {
