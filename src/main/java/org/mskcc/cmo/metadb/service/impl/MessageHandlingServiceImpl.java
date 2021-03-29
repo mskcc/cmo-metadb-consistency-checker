@@ -10,6 +10,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -61,8 +63,8 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
     @Autowired
     private ConsistencyCheckerUtil consistencyCheckerUtil;
 
-    private Map<String, ConsistencyCheckerRequest> igoNewRequestMessagesReceived = new HashMap<>();
-    private Map<String, ConsistencyCheckerRequest> metadbRequestConsistencyCheckerMessagesReceived = new HashMap<>();
+    private ConcurrentMap<String, ConsistencyCheckerRequest> igoNewRequestMessagesReceived = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, ConsistencyCheckerRequest> metadbRequestConsistencyCheckerMessagesReceived = new ConcurrentHashMap<>();
 
     private static final BlockingQueue<ConsistencyCheckerRequest> requestConsistencyCheckingQueue =
         new LinkedBlockingQueue<ConsistencyCheckerRequest>();
