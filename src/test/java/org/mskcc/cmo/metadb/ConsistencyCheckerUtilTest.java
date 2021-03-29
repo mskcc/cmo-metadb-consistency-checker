@@ -93,7 +93,7 @@ public class ConsistencyCheckerUtilTest {
 
     /**
      * Test for handling of fields that are a mix of null or empty strings in the incoming json and published request json.
-     * <p>The consistency checker is expected to pass since the same fields in the jsons being compared have been set to
+     * The consistency checker is expected to pass since the same fields in the jsons being compared have been set to
      * either a null or empty string even though they are not exactly the same (i.e., null and empty strings are treated the same).
      */
     @Test

@@ -3,7 +3,6 @@ package org.mskcc.cmo.metadb.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.*;
 import java.util.*;
-import org.mockito.Mockito;
 import org.mskcc.cmo.common.FileUtil;
 import org.mskcc.cmo.metadb.model.MockJsonTestData;
 import org.mskcc.cmo.metadb.util.ConsistencyCheckerUtil;
