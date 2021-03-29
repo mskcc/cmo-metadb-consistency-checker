@@ -10,21 +10,21 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class ConsistencyCheckerRequest {
     /**
-     * SUCCESSFUL: Consistency checker passed and no time delays. 
+     * SUCCESSFUL: Consistency checker passed and no time delays.
      *      RequestJson is published to "cmo.new_request".
      * SUCCESSFUL_PUBLISHING_TIME_EXCEEDED: Consistency checker passed but
      *      MetaDb took longer than 300s to publish requestJson or
-     *      publishing requestJson to cmo.new_request took longer than 300s. 
+     *      publishing requestJson to cmo.new_request took longer than 300s.
      *      RequestJson is published to "cmo.new_request".
      * FAILED_INCONSISTENT_REQUEST_JSONS: Inconsistent JSON format or
      *      missing attributes. RequestJson is not published to "cmo.new_request".
      * FAILED_DROPPED_MESSAGE: Received requestJson from LIMS through "igo.new_request"
-     *      but never received requestJson from MetaDb through "metadb.new_request_consistency_check_topic". 
+     *      but never received requestJson from MetaDb through "metadb.new_request_consistency_check_topic".
      *      RequestJson is not published to "cmo.new_request".
      * UNKNOWN_OR_INCONCLUSIVE: Inconclusive or unknown error consistency checking requestJson.
      *      RequestJson is not published to "cmo.new_request".
      */
-    public enum StatusType { 
+    public enum StatusType {
         SUCCESSFUL,
         SUCCESSFUL_PUBLISHING_TIME_EXCEEDED,
         FAILED_INCONSISTENT_REQUEST_JSONS,
@@ -43,7 +43,16 @@ public class ConsistencyCheckerRequest {
 
     public ConsistencyCheckerRequest() {}
 
-    public ConsistencyCheckerRequest(String date, String topic, String requestId, String incomingTimestamp, String incomingJson) {
+    /**
+     * ConsistencyCheckerRequest constructor.
+     * @param date
+     * @param topic
+     * @param requestId
+     * @param incomingTimestamp
+     * @param incomingJson
+     */
+    public ConsistencyCheckerRequest(String date, String topic, String requestId,
+            String incomingTimestamp, String incomingJson) {
         this.date = date;
         this.topic = topic;
         this.requestId = requestId;
@@ -51,7 +60,19 @@ public class ConsistencyCheckerRequest {
         this.incomingJson = incomingJson;
     }
 
-    public ConsistencyCheckerRequest(String date, String requestId, StatusType statusType, String incomingTimestamp, String outgoingTimestamp,
+    /**
+     * * ConsistencyCheckerRequest constructor.
+     * @param date
+     * @param requestId
+     * @param statusType
+     * @param incomingTimestamp
+     * @param outgoingTimestamp
+     * @param topic
+     * @param incomingJson
+     * @param outgoingJson
+     */
+    public ConsistencyCheckerRequest(String date, String requestId, StatusType statusType,
+            String incomingTimestamp, String outgoingTimestamp,
             String topic, String incomingJson, String outgoingJson) {
         this.date = date;
         this.requestId = requestId;
@@ -131,11 +152,19 @@ public class ConsistencyCheckerRequest {
         return StringUtils.join(getConsistencyCheckerLoggerFields(), "\t");
     }
 
+    /**
+     * Returns field names in expected order for writing to the logger.
+     * @return
+     */
     public List<String> getConsistencyCheckerLoggerFields() {
         return Arrays.asList("DATE", "REQUEST_ID", "STATUS", "INCOMING_TIMESTAMP",
                 "OUTGOING_TIMESTAMP", "TOPIC", "INCOMING_JSON", "TARGET_JSON");
     }
 
+    /**
+     * Returns fields in expected order for writing to the logger.
+     * @return
+     */
     public List<String> getConsistencyCheckerLoggerRecord() {
         return Arrays.asList(getDate(), getRequestId(), getStatusType().toString(),
                 getIncomingTimestamp(), getOutgoingTimestamp(),
