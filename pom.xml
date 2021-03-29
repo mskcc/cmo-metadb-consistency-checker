@@ -44,21 +44,41 @@
   </properties>
 
   <dependencies>
+      <!-- cmo messaging library -->
     <dependency>
       <groupId>${cmo_metadb_messaging_java.group}</groupId>
       <artifactId>cmo-messaging-java</artifactId>
       <version>${cmo_metadb_messaging_java.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>ch.qos.logback</groupId>
+          <artifactId>logback-classic</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
+    <!-- cmo metadb common -->
+    <dependency>
+      <groupId>${cmo_metadb_common.groupId}</groupId>
+      <artifactId>cmo-metadb-common</artifactId>
+      <version>${cmo_metadb_common.version}</version>
+    </dependency>
+    <!-- logging -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
       <version>${slf4j.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.17</version>
     </dependency>
+     <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>apache-log4j-extras</artifactId>
+      <version>1.0</version>
+    </dependency>
+    <!-- testing -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -70,23 +90,6 @@
       <version>${spring.version}</version>
       <scope>test</scope>
     </dependency>
-    <!-- jackson -->
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>${jackson.version}</version>
-    </dependency>
-    <!-- cmo metadb common -->
-    <dependency>
-      <groupId>${cmo_metadb_common.groupId}</groupId>
-      <artifactId>cmo-metadb-common</artifactId>
-      <version>${cmo_metadb_common.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.skyscreamer</groupId>
-      <artifactId>jsonassert</artifactId>
-      <version>1.5.0</version>
-    </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
@@ -94,6 +97,19 @@
       <scope>test</scope>
       <type>jar</type>
     </dependency>
+    <!-- jackson -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+    <!-- json assert -->
+    <dependency>
+      <groupId>org.skyscreamer</groupId>
+      <artifactId>jsonassert</artifactId>
+      <version>1.5.0</version>
+    </dependency>
+    <!-- string utils -->
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
