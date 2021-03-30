@@ -68,7 +68,17 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
 
     @Autowired
     private ConsistencyCheckerUtil consistencyCheckerUtil;
+    
+    private File loggerFile;
 
+    @Autowired
+    private void initFileUtilLogger() throws Exception {
+        ConsistencyCheckerRequest header = new ConsistencyCheckerRequest();
+        this.loggerFile = fileUtil.getOrCreateFileWithHeader(
+                consistencyCheckerFailuresFilepath,
+                header.getConsistencyCheckerFileHeader());
+    }
+    
     // for tracking messages received for each respective topic
     private ConcurrentMap<String, ConsistencyCheckerRequest> igoNewRequestMessagesReceived =
             new ConcurrentHashMap<>();
@@ -248,8 +258,6 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                 // update status type in igo new requests concurrent map
                 igoNewRequestMessagesReceived.put(incomingRequestId, igoNewRequest);
                 try {
-                    File loggerFile = fileUtil.getOrCreateFileWithHeader(consistencyCheckerFailuresFilepath,
-                            igoNewRequest.getConsistencyCheckerFileHeader());
                     fileUtil.writeToFile(loggerFile, igoNewRequest.toString());
                 } catch (IOException e) {
                     LOG.error("Error occured during attempt to write "
@@ -314,9 +322,6 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                         consistencyCheckerMessagesReceived.remove(request.getRequestId());
 
                         // save request details to logger file
-                        File loggerFile = fileUtil.getOrCreateFileWithHeader(
-                                consistencyCheckerFailuresFilepath,
-                                request.getConsistencyCheckerFileHeader());
                         fileUtil.writeToFile(loggerFile, request.toString());
                     }
                     if (interrupted && requestPublishingQueue.isEmpty()) {
@@ -340,7 +345,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
      * or logging to metadb checker failures logger file if consistency check fails.
      */
     private class ConsistencyCheckerHandler implements Runnable {
-
+        
         final Phaser phaser;
         boolean interrupted = false;
 
@@ -375,9 +380,6 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                                     ConsistencyCheckerRequest.StatusType.FAILED_INCONSISTENT_REQUEST_JSONS);
 
                             // save details to publishing failure logger
-                            File loggerFile = fileUtil.getOrCreateFileWithHeader(
-                                    consistencyCheckerFailuresFilepath,
-                                    requestsToCheck.getConsistencyCheckerFileHeader());
                             fileUtil.writeToFile(loggerFile, requestsToCheck.toString());
                         }
                     }

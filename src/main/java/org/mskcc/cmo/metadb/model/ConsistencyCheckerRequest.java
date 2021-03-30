@@ -151,7 +151,7 @@ public class ConsistencyCheckerRequest {
     }
 
     public String getConsistencyCheckerFileHeader() {
-        return StringUtils.join(getConsistencyCheckerLoggerFields(), "\t");
+        return StringUtils.join(getConsistencyCheckerLoggerFields(), "\t") + "\n";
     }
 
     /**
