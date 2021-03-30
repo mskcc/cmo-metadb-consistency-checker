@@ -68,7 +68,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
 
     @Autowired
     private ConsistencyCheckerUtil consistencyCheckerUtil;
-    
+
     private File loggerFile;
 
     @Autowired
@@ -78,7 +78,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                 consistencyCheckerFailuresFilepath,
                 header.getConsistencyCheckerFileHeader());
     }
-    
+
     // for tracking messages received for each respective topic
     private ConcurrentMap<String, ConsistencyCheckerRequest> igoNewRequestMessagesReceived =
             new ConcurrentHashMap<>();
@@ -345,7 +345,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
      * or logging to metadb checker failures logger file if consistency check fails.
      */
     private class ConsistencyCheckerHandler implements Runnable {
-        
+
         final Phaser phaser;
         boolean interrupted = false;
 
