@@ -5,7 +5,9 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- *
+ * ConsistencyCheckerRequest is used for facilitating the consistency checking
+ * on the request json coming directly from LIMS (aka 'incomingRequest') and comparing
+ * to the MetaDB published request (aka 'outgoingRequest').
  * @author ochoaa
  */
 public class ConsistencyCheckerRequest {
