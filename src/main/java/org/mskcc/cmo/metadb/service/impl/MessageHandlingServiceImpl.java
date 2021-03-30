@@ -305,14 +305,14 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                                 + "' with request id: " + request.getRequestId());
                         messagingGateway.publish(CMO_NEW_REQUEST_TOPIC, request.getOutgoingJson());
 
-                        // update outgoing timestamp and compare to incoming to update status type
-                        // if necessary
-                        request.setOutgoingTimestamp("outgoing timestamp");
-                        Date incomingtDate = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss")
+                        // update outgoing timestamp and compare to incoming to update status type if needed
+                        request.setOutgoingTimestamp(
+                                new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date()));
+                        Date incomingDate = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss")
                                 .parse(request.getIncomingTimestamp());
                         Date outgoingDate = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss")
                                 .parse(request.getOutgoingTimestamp());
-                        if ((outgoingDate.getTime() - incomingtDate.getTime()) > messagingTimeThreshold) {
+                        if ((outgoingDate.getTime() - incomingDate.getTime()) > messagingTimeThreshold) {
                             request.setStatusType(StatusType.SUCCESSFUL_PUBLISHING_TIME_EXCEEDED);
                         }
 
