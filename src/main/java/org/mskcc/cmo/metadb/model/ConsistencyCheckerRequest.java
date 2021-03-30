@@ -11,18 +11,18 @@ import org.apache.commons.lang3.StringUtils;
 public class ConsistencyCheckerRequest {
     /**
      * SUCCESSFUL: Consistency checker passed and no time delays.
-     *      RequestJson is published to "cmo.new_request".
+     *      RequestJson is published to "cmo.new-request".
      * SUCCESSFUL_PUBLISHING_TIME_EXCEEDED: Consistency checker passed but
-     *      MetaDb took longer than 300s to publish requestJson or
-     *      publishing requestJson to cmo.new_request took longer than 300s.
-     *      RequestJson is published to "cmo.new_request".
+     *      MetaDb took longer than the treshold to publish requestJson or
+     *      publishing requestJson to cmo.new-request took longer than the threshold.
+     *      RequestJson is published to "cmo.new-request".
      * FAILED_INCONSISTENT_REQUEST_JSONS: Inconsistent JSON format or
-     *      missing attributes. RequestJson is not published to "cmo.new_request".
-     * FAILED_DROPPED_MESSAGE: Received requestJson from LIMS through "igo.new_request"
-     *      but never received requestJson from MetaDb through "metadb.new_request_consistency_check_topic".
-     *      RequestJson is not published to "cmo.new_request".
+     *      missing attributes. RequestJson is not published to "cmo.new-request".
+     * FAILED_DROPPED_MESSAGE: Received requestJson from LIMS through "igo.new-request"
+     *      but never received requestJson from MetaDb through "metadb.new-request-consistency-check".
+     *      RequestJson is not published to "cmo.new-request".
      * UNKNOWN_OR_INCONCLUSIVE: Inconclusive or unknown error consistency checking requestJson.
-     *      RequestJson is not published to "cmo.new_request".
+     *      RequestJson is not published to "cmo.new-request".
      */
     public enum StatusType {
         SUCCESSFUL,

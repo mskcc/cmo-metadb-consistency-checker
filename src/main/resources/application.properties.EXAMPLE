@@ -16,7 +16,7 @@ num.new_request_handler_threads=
 num.consistency_checker_handler_threads=
 
 # messaging time threshold in seconds (default is 5 minutes)
-messaging.time_threshold_seconds=300
+messaging.time_threshold_seconds=
 
 # publishing failures filepath
 metadb.publishing_failures_filepath=

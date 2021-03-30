@@ -91,8 +91,8 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
     public void initialize(Gateway gateway) throws Exception {
         if (!initialized) {
             messagingGateway = gateway;
-            setupConsistencyCheckerHandler(messagingGateway, this);
-            setupIgoNewRequestHandler(messagingGateway, this);
+            setupConsistencyCheckerSubscriber(messagingGateway, this);
+            setupIgoNewRequestSubscriber(messagingGateway, this);
             initializeNewRequestHandlers();
             initialized = true;
         } else {
@@ -137,7 +137,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
         }
     }
 
-    private void setupIgoNewRequestHandler(Gateway gateway, MessageHandlingService messageHandlingService)
+    private void setupIgoNewRequestSubscriber(Gateway gateway, MessageHandlingService messageHandlingService)
         throws Exception {
         gateway.subscribe(IGO_NEW_REQUEST_TOPIC, Object.class, new MessageConsumer() {
             public void onMessage(Object message) {
@@ -175,14 +175,14 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
         }
     }
 
-    private void setupConsistencyCheckerHandler(Gateway gateway, MessageHandlingService service)
+    private void setupConsistencyCheckerSubscriber(Gateway gateway, MessageHandlingService service)
         throws Exception {
         gateway.subscribe(NEW_REQUEST_CONSISTENCY_CHECK_TOPIC, Object.class, new MessageConsumer() {
             public void onMessage(Object message) {
                 LOG.info("Received message on topic: " + NEW_REQUEST_CONSISTENCY_CHECK_TOPIC);
                 LOG.debug("Message contents: \n" + message.toString() + "\n");
                 try {
-                    String todaysDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE).toString();
+                    String todaysDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
                     String incomingRequestJson = message.toString();
                     String incomingTimestamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
                     String requestId = getRequestIdFromRequestJson(incomingRequestJson);

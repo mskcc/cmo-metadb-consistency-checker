@@ -14,12 +14,14 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.log4j.Logger;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ConsistencyCheckerUtil {
+    private final Logger LOG = Logger.getLogger(ConsistencyCheckerUtil.class);
 
     private final ObjectMapper mapper = new ObjectMapper();
     private final String[] DEFAULT_IGNORED_FIELDS = new String[]{
@@ -45,8 +47,6 @@ public class ConsistencyCheckerUtil {
      */
     public Boolean isConsistent(String referenceJson, String targetJson,
             String[] ignoredFields) throws Exception {
-        //File loggerFile = fileUtil.getOrCreateFileWithHeader(metadbCheckerFailuresFilepath,
-        //CONSISTENCY_CHECKER_FAILURES_FILE_HEADER);
         if (referenceJson == null ? targetJson == null : referenceJson.equals(targetJson)) {
             return true;
         }
@@ -62,26 +62,14 @@ public class ConsistencyCheckerUtil {
                     targetFilteredJsonMap.get("samplesNode"), JSONCompareMode.STRICT);
 
             assertResponse = true;
-            //fileUtil.writeToFile(loggerFile, SUCCESSFUL_CONSISTENCY_CHECK);
         } catch (Exception e) {
-            //fileUtil.writeToFile(loggerFile, FAILED_CONSISTENCY_CHECK);
-            e.printStackTrace();
+            LOG.error("Error encountered during consistency check", e);
         }
         return assertResponse;
     }
 
     public Boolean isConsistent(String referenceJson, String targetJson) throws Exception {
         return isConsistent(referenceJson, targetJson, DEFAULT_IGNORED_FIELDS);
-    }
-
-    /**
-     * TODO?
-     * @param referenceJson
-     * @param targetJson
-     * @return
-     */
-    public Object getJsonDiffs(String referenceJson, String targetJson) {
-        throw new UnsupportedOperationException("Method not supported yet");
     }
 
     /**
