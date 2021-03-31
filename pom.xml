@@ -37,10 +37,10 @@
     <jackson.version>2.11.2</jackson.version>
     <!-- metadb messaging -->
     <cmo_metadb_messaging_java.group>com.github.mskcc</cmo_metadb_messaging_java.group>
-    <cmo_metadb_messaging_java.version>e09ff1f5322493dad4aab7b7dbd312e61f624cd1</cmo_metadb_messaging_java.version>
+    <cmo_metadb_messaging_java.version>v1.2-alpha</cmo_metadb_messaging_java.version>
     <!-- metadb common centralized config properties -->
     <cmo_metadb_common.groupId>com.github.mskcc</cmo_metadb_common.groupId>
-    <cmo_metadb_common.version>16c1f1fdc990e34714eccbaefabf99c61088de3c</cmo_metadb_common.version>
+    <cmo_metadb_common.version>v1.4-alpha</cmo_metadb_common.version>
   </properties>
 
   <dependencies>
