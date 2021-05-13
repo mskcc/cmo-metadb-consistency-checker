@@ -1,7 +1,8 @@
 package org.mskcc.cmo.metadb;
 
 import java.util.concurrent.CountDownLatch;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mskcc.cmo.messaging.Gateway;
 import org.mskcc.cmo.metadb.service.MessageHandlingService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication(scanBasePackages = {"org.mskcc.cmo.messaging",
         "org.mskcc.cmo.common.*", "org.mskcc.cmo.metadb.*"})
 public class ConsistencyCheckerApp implements CommandLineRunner {
-    private final Logger LOG = Logger.getLogger(ConsistencyCheckerApp.class);
+    private static final Log LOG = LogFactory.getLog(ConsistencyCheckerApp.class);
 
     @Autowired
     private Gateway messagingGateway;

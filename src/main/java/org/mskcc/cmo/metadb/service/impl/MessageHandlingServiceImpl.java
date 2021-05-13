@@ -19,7 +19,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mskcc.cmo.common.FileUtil;
 import org.mskcc.cmo.messaging.Gateway;
 import org.mskcc.cmo.messaging.MessageConsumer;
@@ -37,7 +38,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class MessageHandlingServiceImpl implements MessageHandlingService {
-    private final Logger LOG = Logger.getLogger(MessageHandlingServiceImpl.class);
+    private static final Log LOG = LogFactory.getLog(MessageHandlingServiceImpl.class);
 
     @Autowired
     private FileUtil fileUtil;

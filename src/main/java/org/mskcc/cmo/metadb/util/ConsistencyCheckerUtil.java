@@ -14,14 +14,15 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ConsistencyCheckerUtil {
-    private final Logger LOG = Logger.getLogger(ConsistencyCheckerUtil.class);
+    private static final Log LOG = LogFactory.getLog(ConsistencyCheckerUtil.class);
 
     private final ObjectMapper mapper = new ObjectMapper();
     private final String[] DEFAULT_IGNORED_FIELDS = new String[]{
