@@ -61,6 +61,9 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
     @Value("${num.consistency_checker_handler_threads}")
     private int NUM_CONSISTENCY_CHECKER_HANDLERS;
 
+    @Value("${igo.cmo_request_filter:false}")
+    private Boolean igoCmoRequestFilter;
+
     @Value("${messaging.time_threshold_seconds:300}")
     private Integer messagingTimeThreshold;
 
@@ -135,6 +138,11 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
         return requestJsonMap.get("requestId").toString();
     }
 
+    private Boolean isCmoRequest(String requestJson) throws JsonProcessingException {
+        Map<String, Object> requestJsonMap = mapper.readValue(requestJson, Map.class);
+        return Boolean.valueOf(requestJsonMap.get("cmoRequest").toString());
+    }
+
     @Override
     public void newIgoRequestHandler(ConsistencyCheckerRequest request) throws Exception {
         if (!initialized) {
@@ -164,8 +172,14 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                             new ConsistencyCheckerRequest(todaysDate, IGO_NEW_REQUEST_TOPIC,
                             requestId, incomingTimestamp, incomingRequestJson);
 
-                    LOG.info("Adding request to 'igoNewRequestMessagesReceived': " + request.getRequestId());
-                    messageHandlingService.newIgoRequestHandler(request);
+                    // skip request if using the cmo request filter
+                    if (igoCmoRequestFilter && !isCmoRequest(incomingRequestJson)) {
+                        LOG.info("CMO request filter enabled - skipping non-CMO request: " + requestId);
+                    } else {
+                        LOG.info("Adding request to 'igoNewRequestMessagesReceived': "
+                                + request.getRequestId());
+                        messageHandlingService.newIgoRequestHandler(request);
+                    }
                 } catch (Exception e) {
                     LOG.error("Unable to process IGO_NEW_REQUEST message:\n" + message.toString() + "\n", e);
                 }
@@ -201,9 +215,15 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                     ConsistencyCheckerRequest request =
                             new ConsistencyCheckerRequest(todaysDate, NEW_REQUEST_CONSISTENCY_CHECK_TOPIC,
                             requestId, incomingTimestamp, incomingRequestJson);
-                    LOG.info("Adding request to 'consistencyCheckerMessagesReceived': "
-                            + request.getRequestId());
-                    service.newConsistencyCheckerHandler(request);
+
+                    // skip request if using the cmo request filter
+                    if (igoCmoRequestFilter && !isCmoRequest(incomingRequestJson)) {
+                        LOG.info("CMO request filter enabled - skipping non-CMO request: " + requestId);
+                    } else {
+                        LOG.info("Adding request to 'consistencyCheckerMessagesReceived': "
+                                + request.getRequestId());
+                        service.newConsistencyCheckerHandler(request);
+                    }
                 } catch (Exception e) {
                     LOG.error("Unable to process NEW_REQUEST_CONSISTENCY_CHECK_TOPIC message:\n"
                             + message.toString() + "\n", e);
