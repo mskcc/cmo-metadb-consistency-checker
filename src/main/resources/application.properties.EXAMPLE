@@ -30,3 +30,6 @@ metadb.publishing_failures_filepath=
 
 # detailed consistency checking logger filepath
 consistency_checker.request_handling_failures_filepath=
+
+# cmo request filter (default is false)
+igo.cmo_request_filter=
