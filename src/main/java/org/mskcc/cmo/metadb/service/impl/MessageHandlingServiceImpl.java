@@ -41,6 +41,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class MessageHandlingServiceImpl implements MessageHandlingService {
     private static final Log LOG = LogFactory.getLog(MessageHandlingServiceImpl.class);
+    private final String TIMESTAMP_FORMAT = "yyyy.MM.dd.HH.mm.ss";
 
     @Autowired
     private FileUtil fileUtil;
@@ -62,9 +63,6 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
 
     @Value("${num.consistency_checker_handler_threads}")
     private int NUM_CONSISTENCY_CHECKER_HANDLERS;
-
-    @Value("${igo.cmo_request_filter:false}")
-    private Boolean igoCmoRequestFilter;
 
     @Value("${messaging.time_threshold_seconds:300}")
     private Integer messagingTimeThreshold;
@@ -140,11 +138,6 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
         return requestJsonMap.get("requestId").toString();
     }
 
-    private Boolean isCmoRequest(String requestJson) throws JsonProcessingException {
-        Map<String, Object> requestJsonMap = mapper.readValue(requestJson, Map.class);
-        return Boolean.valueOf(requestJsonMap.get("cmoRequest").toString());
-    }
-
     @Override
     public void newIgoRequestHandler(ConsistencyCheckerRequest request) throws Exception {
         if (!initialized) {
@@ -168,21 +161,18 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                     String incomingRequestJson = mapper.readValue(
                             new String(msg.getData(), StandardCharsets.UTF_8),
                             String.class);
-                    String incomingTimestamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+                    String incomingTimestamp = new SimpleDateFormat(TIMESTAMP_FORMAT).format(new Date());
                     String requestId = getRequestIdFromRequestJson(incomingRequestJson);
 
                     ConsistencyCheckerRequest request =
                             new ConsistencyCheckerRequest(todaysDate, IGO_NEW_REQUEST_TOPIC,
                             requestId, incomingTimestamp, incomingRequestJson);
 
-                    // skip request if using the cmo request filter
-                    if (igoCmoRequestFilter && !isCmoRequest(incomingRequestJson)) {
-                        LOG.info("CMO request filter enabled - skipping non-CMO request: " + requestId);
-                    } else {
-                        LOG.info("Adding request to 'igoNewRequestMessagesReceived': "
-                                + request.getRequestId());
-                        messageHandlingService.newIgoRequestHandler(request);
-                    }
+                    
+                    LOG.info("Adding request to 'igoNewRequestMessagesReceived': "
+                            + request.getRequestId());
+                    messageHandlingService.newIgoRequestHandler(request);
+                    
                 } catch (Exception e) {
                     LOG.error("Unable to process IGO_NEW_REQUEST message:\n" + message.toString() + "\n", e);
                 }
@@ -213,27 +203,21 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                     String incomingRequestJson = mapper.readValue(
                             new String(msg.getData(), StandardCharsets.UTF_8),
                             String.class);
-                    String incomingTimestamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+                    String incomingTimestamp = new SimpleDateFormat(TIMESTAMP_FORMAT).format(new Date());
                     String requestId = getRequestIdFromRequestJson(incomingRequestJson);
 
                     ConsistencyCheckerRequest request =
                             new ConsistencyCheckerRequest(todaysDate, NEW_REQUEST_CONSISTENCY_CHECK_TOPIC,
                             requestId, incomingTimestamp, incomingRequestJson);
 
-                    // skip request if using the cmo request filter
-                    if (igoCmoRequestFilter && !isCmoRequest(incomingRequestJson)) {
-                        LOG.info("CMO request filter enabled - skipping non-CMO request: " + requestId);
+                    LOG.info("Running consistency check on request: " + requestId);
+                    if (consistencyCheckerUtil.isConsistent(incomingRequestJson, incomingRequestJson)) {
+                        LOG.info("Consistency check passed, adding to requestPublishingQueue");
+                        service.newConsistencyCheckerHandler(request);
                     } else {
-                        LOG.info("Running consistency check on request: " + requestId);
-                        if (consistencyCheckerUtil.isConsistent(incomingRequestJson, incomingRequestJson)) {
-                            LOG.info("Consistency check passed, adding to requestPublishingQueue");
-                            service.newConsistencyCheckerHandler(request);
-                        } else {
-                            LOG.warn("Consistency check failed for request: " + requestId);
-                            request.setStatusType(StatusType.FAILED_INCONSISTENT_REQUEST_JSONS);
-                            fileUtil.writeToFile(loggerFile, request.toString() + "\n");
-                        }
-
+                        LOG.warn("Consistency check failed for request: " + requestId);
+                        request.setStatusType(StatusType.FAILED_INCONSISTENT_REQUEST_JSONS);
+                        fileUtil.writeToFile(loggerFile, request.toString() + "\n");
                     }
                 } catch (Exception e) {
                     LOG.error("Unable to process NEW_REQUEST_CONSISTENCY_CHECK_TOPIC message:\n"
@@ -264,9 +248,9 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
 
                 // compare incoming vs outgoing timestamps to determine if time between message
                 // received on both topics is greater than specified messaging time threshold
-                Date incomingTimestamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss")
+                Date incomingTimestamp = new SimpleDateFormat(TIMESTAMP_FORMAT)
                         .parse(igoNewRequest.getIncomingTimestamp());
-                Date outgoingTimestamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss")
+                Date outgoingTimestamp = new SimpleDateFormat(TIMESTAMP_FORMAT)
                         .parse(consistencyCheckRequest.getIncomingTimestamp());
                 if ((incomingTimestamp.getTime() - outgoingTimestamp.getTime()) > messagingTimeThreshold) {
                     igoNewRequest.setStatusType(StatusType.SUCCESSFUL_PUBLISHING_TIME_EXCEEDED);
@@ -340,10 +324,10 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
 
                         // update outgoing timestamp and compare to incoming to update status type if needed
                         request.setOutgoingTimestamp(
-                                new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date()));
-                        Date incomingDate = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss")
+                                new SimpleDateFormat(TIMESTAMP_FORMAT).format(new Date()));
+                        Date incomingDate = new SimpleDateFormat(TIMESTAMP_FORMAT)
                                 .parse(request.getIncomingTimestamp());
-                        Date outgoingDate = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss")
+                        Date outgoingDate = new SimpleDateFormat(TIMESTAMP_FORMAT)
                                 .parse(request.getOutgoingTimestamp());
                         if ((outgoingDate.getTime() - incomingDate.getTime()) > messagingTimeThreshold) {
                             request.setStatusType(StatusType.SUCCESSFUL_PUBLISHING_TIME_EXCEEDED);
