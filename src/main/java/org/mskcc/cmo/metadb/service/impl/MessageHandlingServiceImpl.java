@@ -2,8 +2,10 @@ package org.mskcc.cmo.metadb.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.nats.client.Message;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -159,12 +161,13 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
     private void setupIgoNewRequestSubscriber(Gateway gateway, MessageHandlingService messageHandlingService)
         throws Exception {
         gateway.subscribe(IGO_NEW_REQUEST_TOPIC, Object.class, new MessageConsumer() {
-            public void onMessage(Object message) {
+            public void onMessage(Message msg, Object message) {
                 LOG.info("Received message on topic: " + IGO_NEW_REQUEST_TOPIC);
-                LOG.debug("Message contents: \n" + message.toString() + "\n");
                 try {
                     String todaysDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
-                    String incomingRequestJson = message.toString();
+                    String incomingRequestJson = mapper.readValue(
+                            new String(msg.getData(), StandardCharsets.UTF_8),
+                            String.class);
                     String incomingTimestamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
                     String requestId = getRequestIdFromRequestJson(incomingRequestJson);
 
@@ -203,12 +206,13 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
     private void setupConsistencyCheckerSubscriber(Gateway gateway, MessageHandlingService service)
         throws Exception {
         gateway.subscribe(NEW_REQUEST_CONSISTENCY_CHECK_TOPIC, Object.class, new MessageConsumer() {
-            public void onMessage(Object message) {
+            public void onMessage(Message msg, Object message) {
                 LOG.info("Received message on topic: " + NEW_REQUEST_CONSISTENCY_CHECK_TOPIC);
-                LOG.debug("Message contents: \n" + message.toString() + "\n");
                 try {
                     String todaysDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
-                    String incomingRequestJson = message.toString();
+                    String incomingRequestJson = mapper.readValue(
+                            new String(msg.getData(), StandardCharsets.UTF_8),
+                            String.class);
                     String incomingTimestamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
                     String requestId = getRequestIdFromRequestJson(incomingRequestJson);
 
@@ -220,9 +224,16 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                     if (igoCmoRequestFilter && !isCmoRequest(incomingRequestJson)) {
                         LOG.info("CMO request filter enabled - skipping non-CMO request: " + requestId);
                     } else {
-                        LOG.info("Adding request to 'consistencyCheckerMessagesReceived': "
-                                + request.getRequestId());
-                        service.newConsistencyCheckerHandler(request);
+                        LOG.info("Running consistency check on request: " + requestId);
+                        if (consistencyCheckerUtil.isConsistent(incomingRequestJson, incomingRequestJson)) {
+                            LOG.info("Consistency check passed, adding to requestPublishingQueue");
+                            service.newConsistencyCheckerHandler(request);
+                        } else {
+                            LOG.warn("Consistency check failed for request: " + requestId);
+                            request.setStatusType(StatusType.FAILED_INCONSISTENT_REQUEST_JSONS);
+                            fileUtil.writeToFile(loggerFile, request.toString());
+                        }
+
                     }
                 } catch (Exception e) {
                     LOG.error("Unable to process NEW_REQUEST_CONSISTENCY_CHECK_TOPIC message:\n"
@@ -324,7 +335,8 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                     if (request != null) {
                         LOG.info("Publishing request to topic '" + CMO_NEW_REQUEST_TOPIC
                                 + "' with request id: " + request.getRequestId());
-                        messagingGateway.publish(CMO_NEW_REQUEST_TOPIC, request.getOutgoingJson());
+                        messagingGateway.publish(request.getRequestId(),
+                                CMO_NEW_REQUEST_TOPIC, request.getOutgoingJson());
 
                         // update outgoing timestamp and compare to incoming to update status type if needed
                         request.setOutgoingTimestamp(
@@ -358,8 +370,6 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
         }
 
     }
-
-
 
     /**
      * Handler for adding requests to the publishing queue if passed consistency check
