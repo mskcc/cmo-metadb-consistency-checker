@@ -231,7 +231,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                         } else {
                             LOG.warn("Consistency check failed for request: " + requestId);
                             request.setStatusType(StatusType.FAILED_INCONSISTENT_REQUEST_JSONS);
-                            fileUtil.writeToFile(loggerFile, request.toString());
+                            fileUtil.writeToFile(loggerFile, request.toString() + "\n");
                         }
 
                     }
@@ -290,7 +290,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                 // update status type in igo new requests concurrent map
                 igoNewRequestMessagesReceived.put(incomingRequestId, igoNewRequest);
                 try {
-                    fileUtil.writeToFile(loggerFile, igoNewRequest.toString());
+                    fileUtil.writeToFile(loggerFile, igoNewRequest.toString() + "\n");
                 } catch (IOException e) {
                     LOG.error("Error occured during attempt to write "
                             + "to MetaDB consistency checker failures file", e);
@@ -355,7 +355,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                         consistencyCheckerMessagesReceived.remove(request.getRequestId());
 
                         // save request details to logger file
-                        fileUtil.writeToFile(loggerFile, request.toString());
+                        fileUtil.writeToFile(loggerFile, request.toString() + "\n");
                     }
                     if (interrupted && requestPublishingQueue.isEmpty()) {
                         break;
@@ -411,7 +411,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                                     ConsistencyCheckerRequest.StatusType.FAILED_INCONSISTENT_REQUEST_JSONS);
 
                             // save details to publishing failure logger
-                            fileUtil.writeToFile(loggerFile, requestsToCheck.toString());
+                            fileUtil.writeToFile(loggerFile, requestsToCheck.toString() + "\n");
                         }
                     }
                     if (interrupted && requestConsistencyCheckingQueue.isEmpty()) {
