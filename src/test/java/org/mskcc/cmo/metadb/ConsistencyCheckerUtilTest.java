@@ -1,6 +1,7 @@
 package org.mskcc.cmo.metadb;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import junit.framework.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,6 +23,7 @@ public class ConsistencyCheckerUtilTest {
     private ConsistencyCheckerUtil consistencyCheckerUtil;
 
     private Map<String, String> requestJsonDataIdMap;
+
     @Autowired
     private void initRequestJsonDataIdMap() {
         this.requestJsonDataIdMap = new HashMap<>();
@@ -66,9 +68,11 @@ public class ConsistencyCheckerUtilTest {
             MockJsonTestData publishedRequest = mockedRequestJsonDataMap.get(publishedRequestId);
 
             try {
-                Boolean consistencyCheckStatus = consistencyCheckerUtil.isConsistent(incomingRequest.getJsonString(), publishedRequest.getJsonString());
-                if(!consistencyCheckStatus) {
-                    errorsMap.put(incomingRequestId, "Request did not pass consistency check but no exception was caught.");
+                Boolean consistencyCheckStatus = consistencyCheckerUtil.isConsistent(
+                        incomingRequest.getJsonString(), publishedRequest.getJsonString());
+                if (!consistencyCheckStatus) {
+                    errorsMap.put(incomingRequestId,
+                            "Request did not pass consistency check but no exception was caught.");
                 }
             } catch (Exception e) {
                 errorsMap.put(incomingRequestId, e.getMessage());
@@ -85,22 +89,30 @@ public class ConsistencyCheckerUtilTest {
      */
     @Test(expected = AssertionError.class)
     public void testNullJsonFieldHandlingInPublishedRequest() throws Exception {
-        MockJsonTestData incomingRequest = mockedRequestJsonDataMap.get("mockIncomingRequest1JsonDataWith2T2N");
-        MockJsonTestData publishedRequest = mockedRequestJsonDataMap.get("mockPublishedRequest1JsonNullValues");
-        Boolean consistencyCheckStatus = consistencyCheckerUtil.isConsistent(incomingRequest.getJsonString(), publishedRequest.getJsonString());
+        MockJsonTestData incomingRequest =
+                mockedRequestJsonDataMap.get("mockIncomingRequest1JsonDataWith2T2N");
+        MockJsonTestData publishedRequest =
+                mockedRequestJsonDataMap.get("mockPublishedRequest1JsonNullValues");
+        Boolean consistencyCheckStatus = consistencyCheckerUtil.isConsistent(
+                incomingRequest.getJsonString(), publishedRequest.getJsonString());
         Assert.assertFalse(consistencyCheckStatus);
     }
 
     /**
-     * Test for handling of fields that are a mix of null or empty strings in the incoming json and published request json.
-     * The consistency checker is expected to pass since the same fields in the jsons being compared have been set to
-     * either a null or empty string even though they are not exactly the same (i.e., null and empty strings are treated the same).
+     * Test for handling of fields that are a mix of null or empty strings in
+     * the incoming json and published request json.
+     * The consistency checker is expected to pass since the same fields in the
+     * jsons being compared have been set to either a null or empty string even
+     * though they are not exactly the same (i.e., null and empty strings are treated the same).
      */
     @Test
     public void testNullOrEmptyJsonFieldHandlingInIncomingAndPublishedRequest() throws Exception {
-        MockJsonTestData incomingRequest = mockedRequestJsonDataMap.get("mockIncomingRequest4JsonNullOrEmptyValues");
-        MockJsonTestData publishedRequest = mockedRequestJsonDataMap.get("mockPublishedRequest4JsonNullOrEmptyValues");
-        Boolean consistencyCheckStatus = consistencyCheckerUtil.isConsistent(incomingRequest.getJsonString(), publishedRequest.getJsonString());
+        MockJsonTestData incomingRequest =
+                mockedRequestJsonDataMap.get("mockIncomingRequest4JsonNullOrEmptyValues");
+        MockJsonTestData publishedRequest =
+                mockedRequestJsonDataMap.get("mockPublishedRequest4JsonNullOrEmptyValues");
+        Boolean consistencyCheckStatus = consistencyCheckerUtil.isConsistent(
+                incomingRequest.getJsonString(), publishedRequest.getJsonString());
         Assert.assertTrue(consistencyCheckStatus);
     }
 
