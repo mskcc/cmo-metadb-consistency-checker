@@ -24,12 +24,12 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.cmo.common.FileUtil;
+import org.mskcc.cmo.common.MetadbJsonComparator;
 import org.mskcc.cmo.messaging.Gateway;
 import org.mskcc.cmo.messaging.MessageConsumer;
 import org.mskcc.cmo.metadb.model.ConsistencyCheckerRequest;
 import org.mskcc.cmo.metadb.model.ConsistencyCheckerRequest.StatusType;
 import org.mskcc.cmo.metadb.service.MessageHandlingService;
-import org.mskcc.cmo.metadb.util.ConsistencyCheckerUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -71,7 +71,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
     private Gateway messagingGateway;
 
     @Autowired
-    private ConsistencyCheckerUtil consistencyCheckerUtil;
+    private MetadbJsonComparator metadbJsonComparator;
 
     private File loggerFile;
 
@@ -168,11 +168,11 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                             new ConsistencyCheckerRequest(todaysDate, IGO_NEW_REQUEST_TOPIC,
                             requestId, incomingTimestamp, incomingRequestJson);
 
-                    
+
                     LOG.info("Adding request to 'igoNewRequestMessagesReceived': "
                             + request.getRequestId());
                     messageHandlingService.newIgoRequestHandler(request);
-                    
+
                 } catch (Exception e) {
                     LOG.error("Unable to process IGO_NEW_REQUEST message:\n" + message.toString() + "\n", e);
                 }
@@ -211,7 +211,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                             requestId, incomingTimestamp, incomingRequestJson);
 
                     LOG.info("Running consistency check on request: " + requestId);
-                    if (consistencyCheckerUtil.isConsistent(incomingRequestJson, incomingRequestJson)) {
+                    if (metadbJsonComparator.isConsistent(incomingRequestJson, incomingRequestJson)) {
                         LOG.info("Consistency check passed, adding to requestPublishingQueue");
                         service.newConsistencyCheckerHandler(request);
                     } else {
@@ -379,7 +379,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                     if (requestsToCheck != null) {
                         LOG.info("Running consistency check on request: " + requestsToCheck.getRequestId());
                         // consistency check the requests
-                        Boolean passedConsistencyCheck = consistencyCheckerUtil.isConsistent(
+                        Boolean passedConsistencyCheck = metadbJsonComparator.isConsistent(
                                 requestsToCheck.getIncomingJson(),
                                 requestsToCheck.getOutgoingJson());
                         if (passedConsistencyCheck) {
