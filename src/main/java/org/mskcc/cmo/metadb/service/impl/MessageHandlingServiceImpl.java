@@ -209,16 +209,9 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                     ConsistencyCheckerRequest request =
                             new ConsistencyCheckerRequest(todaysDate, NEW_REQUEST_CONSISTENCY_CHECK_TOPIC,
                             requestId, incomingTimestamp, incomingRequestJson);
-
-                    LOG.info("Running consistency check on request: " + requestId);
-                    if (metadbJsonComparator.isConsistent(incomingRequestJson, incomingRequestJson)) {
-                        LOG.info("Consistency check passed, adding to requestPublishingQueue");
-                        service.newConsistencyCheckerHandler(request);
-                    } else {
-                        LOG.warn("Consistency check failed for request: " + requestId);
-                        request.setStatusType(StatusType.FAILED_INCONSISTENT_REQUEST_JSONS);
-                        fileUtil.writeToFile(loggerFile, request.toString() + "\n");
-                    }
+                    LOG.info("Adding request to new request consistency checker handler: "
+                            + request.getRequestId());
+                    service.newConsistencyCheckerHandler(request);
                 } catch (Exception e) {
                     LOG.error("Unable to process NEW_REQUEST_CONSISTENCY_CHECK_TOPIC message:\n"
                             + message.toString() + "\n", e);
