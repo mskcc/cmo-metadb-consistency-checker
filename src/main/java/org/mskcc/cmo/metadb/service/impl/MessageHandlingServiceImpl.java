@@ -135,6 +135,9 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
 
     private String getRequestIdFromRequestJson(String requestJson) throws JsonProcessingException {
         Map<String, Object> requestJsonMap = mapper.readValue(requestJson, Map.class);
+        if (requestJsonMap.containsKey("igoRequestId")) {
+            return requestJsonMap.get("igoRequestId").toString();
+        }
         return requestJsonMap.get("requestId").toString();
     }
 
@@ -167,8 +170,6 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                     ConsistencyCheckerRequest request =
                             new ConsistencyCheckerRequest(todaysDate, IGO_NEW_REQUEST_TOPIC,
                             requestId, incomingTimestamp, incomingRequestJson);
-
-
                     LOG.info("Adding request to 'igoNewRequestMessagesReceived': "
                             + request.getRequestId());
                     messageHandlingService.newIgoRequestHandler(request);
