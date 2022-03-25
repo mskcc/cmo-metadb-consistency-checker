@@ -17,8 +17,8 @@ nats.store_password=
 
 # messaging configuration
 igo.new_request_topic=
-metadb.new_request_consistency_check_topic=
-metadb.cmo_new_request_topic=
+smile.new_request_consistency_check_topic=
+smile.cmo_new_request_topic=
 
 # threading
 num.new_request_handler_threads=
@@ -28,7 +28,7 @@ num.consistency_checker_handler_threads=
 messaging.time_threshold_seconds=
 
 # publishing failures filepath
-metadb.publishing_failures_filepath=
+smile.publishing_failures_filepath=
 
 # detailed consistency checking logger filepath
 consistency_checker.request_handling_failures_filepath=

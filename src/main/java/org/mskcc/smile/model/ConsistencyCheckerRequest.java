@@ -1,4 +1,4 @@
-package org.mskcc.cmo.metadb.model;
+package org.mskcc.smile.model;
 
 import java.util.Arrays;
 import java.util.List;
@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * ConsistencyCheckerRequest is used for facilitating the consistency checking
  * on the request json coming directly from LIMS (aka 'incomingRequest') and comparing
- * to the MetaDB published request (aka 'outgoingRequest').
+ * to the SMILE published request (aka 'outgoingRequest').
  * @author ochoaa
  */
 public class ConsistencyCheckerRequest {
@@ -15,13 +15,13 @@ public class ConsistencyCheckerRequest {
      * SUCCESSFUL: Consistency checker passed and no time delays.
      *      RequestJson is published to "cmo.new-request".
      * SUCCESSFUL_PUBLISHING_TIME_EXCEEDED: Consistency checker passed but
-     *      MetaDb took longer than the treshold to publish requestJson or
+     *      SMILE took longer than the treshold to publish requestJson or
      *      publishing requestJson to cmo.new-request took longer than the threshold.
      *      RequestJson is published to "cmo.new-request".
      * FAILED_INCONSISTENT_REQUEST_JSONS: Inconsistent JSON format or
      *      missing attributes. RequestJson is not published to "cmo.new-request".
      * FAILED_DROPPED_MESSAGE: Received requestJson from LIMS through "igo.new-request"
-     *      but never received requestJson from MetaDb through "metadb.new-request-consistency-check".
+     *      but never received requestJson from SMILE through "smile.new-request-consistency-check".
      *      RequestJson is not published to "cmo.new-request".
      * UNKNOWN_OR_INCONCLUSIVE: Inconclusive or unknown error consistency checking requestJson.
      *      RequestJson is not published to "cmo.new-request".

@@ -1,6 +1,6 @@
-# CMO MetaDB Consistency Checker 🔍
+# SMILE Consistency Checker 🔍
 
-The Consistency Checker is one of several components that comprise the CMO MetaDB distributed microservices system. Its role is to ensure that there is no data loss by comparing the message contents for a given LIMS Request ID directly from the LIMSRest service with the corresponding message contents from the CMO MetaDB service.
+The Consistency Checker is one of several components that comprise the SMILE distributed microservices system. Its role is to ensure that there is no data loss by comparing the message contents for a given LIMS Request ID directly from the LIMSRest service with the corresponding message contents from the SMILE service.
 
 ## Run
 

@@ -1,7 +1,7 @@
-package org.mskcc.cmo.metadb.service;
+package org.mskcc.smile.service;
 
 import org.mskcc.cmo.messaging.Gateway;
-import org.mskcc.cmo.metadb.model.ConsistencyCheckerRequest;
+import org.mskcc.smile.model.ConsistencyCheckerRequest;
 
 public interface MessageHandlingService {
     void initialize(Gateway gateway) throws Exception;
