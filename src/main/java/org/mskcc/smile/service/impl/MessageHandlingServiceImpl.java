@@ -1,4 +1,4 @@
-package org.mskcc.cmo.metadb.service.impl;
+package org.mskcc.smile.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,13 +23,13 @@ import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mskcc.cmo.common.FileUtil;
-import org.mskcc.cmo.common.MetadbJsonComparator;
 import org.mskcc.cmo.messaging.Gateway;
 import org.mskcc.cmo.messaging.MessageConsumer;
-import org.mskcc.cmo.metadb.model.ConsistencyCheckerRequest;
-import org.mskcc.cmo.metadb.model.ConsistencyCheckerRequest.StatusType;
-import org.mskcc.cmo.metadb.service.MessageHandlingService;
+import org.mskcc.smile.commons.FileUtil;
+import org.mskcc.smile.commons.JsonComparator;
+import org.mskcc.smile.model.ConsistencyCheckerRequest;
+import org.mskcc.smile.model.ConsistencyCheckerRequest.StatusType;
+import org.mskcc.smile.service.MessageHandlingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -52,10 +52,10 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
     @Value("${igo.new_request_topic}")
     private String IGO_NEW_REQUEST_TOPIC;
 
-    @Value("${metadb.new_request_consistency_check_topic}")
+    @Value("${smile.new_request_consistency_check_topic}")
     private String NEW_REQUEST_CONSISTENCY_CHECK_TOPIC;
 
-    @Value("${metadb.cmo_new_request_topic}")
+    @Value("${smile.cmo_new_request_topic}")
     private String CMO_NEW_REQUEST_TOPIC;
 
     @Value("${num.new_request_handler_threads}")
@@ -71,7 +71,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
     private Gateway messagingGateway;
 
     @Autowired
-    private MetadbJsonComparator metadbJsonComparator;
+    private JsonComparator jsonComparator;
 
     private File loggerFile;
 
@@ -237,7 +237,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                 ConsistencyCheckerRequest consistencyCheckRequest =
                         consistencyCheckerMessagesReceived.get(incomingRequestId);
 
-                // outgoing json is the json from metadb consistency checker topic
+                // outgoing json is the json from smile consistency checker topic
                 igoNewRequest.setOutgoingJson(consistencyCheckRequest.getIncomingJson());
 
                 // compare incoming vs outgoing timestamps to determine if time between message
@@ -254,7 +254,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                 igoNewRequestMessagesReceived.remove(incomingRequestId);
                 requestConsistencyCheckingQueue.add(igoNewRequest);
             } else {
-                // have not gotten the cmo metadb request for consistency checking yet
+                // have not gotten the cmo smile request for consistency checking yet
                 // determine if the difference between the current time  and the igo
                 // new request incoming timestamp is greater than specified messaging time threshold
                 // if status is already set as StatusType.FAILED_DROPPED_MESSAGE then assume
@@ -271,7 +271,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                     fileUtil.writeToFile(loggerFile, igoNewRequest.toString() + "\n");
                 } catch (IOException e) {
                     LOG.error("Error occured during attempt to write "
-                            + "to MetaDB consistency checker failures file", e);
+                            + "to SMILE consistency checker failures file", e);
                 }
             }
         }
@@ -292,7 +292,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
 
     /**
      * Handler for adding requests to the publishing queue if passed consistency check
-     * or logging to metadb checker failures logger file if consistency check fails.
+     * or logging to smile checker failures logger file if consistency check fails.
      */
     private class NewIgoRequestHandler implements Runnable {
 
@@ -351,7 +351,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
 
     /**
      * Handler for adding requests to the publishing queue if passed consistency check
-     * or logging to metadb checker failures logger file if consistency check fails.
+     * or logging to smile checker failures logger file if consistency check fails.
      */
     private class ConsistencyCheckerHandler implements Runnable {
 
@@ -373,7 +373,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                     if (requestsToCheck != null) {
                         LOG.info("Running consistency check on request: " + requestsToCheck.getRequestId());
                         // consistency check the requests
-                        Boolean passedConsistencyCheck = metadbJsonComparator.isConsistent(
+                        Boolean passedConsistencyCheck = jsonComparator.isConsistent(
                                 requestsToCheck.getIncomingJson(),
                                 requestsToCheck.getOutgoingJson());
                         if (passedConsistencyCheck) {
