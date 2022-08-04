@@ -46,9 +46,6 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
     @Autowired
     private FileUtil fileUtil;
 
-    @Value("${consistency_checker.request_handling_failures_filepath}")
-    private String consistencyCheckerFailuresFilepath;
-
     @Value("${igo.new_request_topic}")
     private String IGO_NEW_REQUEST_TOPIC;
 
@@ -76,7 +73,8 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
     private File loggerFile;
 
     @Autowired
-    private void initFileUtilLogger() throws Exception {
+    private void initFileUtilLogger(@Value("${consistency_checker.request_handling_failures_filepath}")
+        String consistencyCheckerFailuresFilepath) throws Exception {
         ConsistencyCheckerRequest header = new ConsistencyCheckerRequest();
         this.loggerFile = fileUtil.getOrCreateFileWithHeader(
                 consistencyCheckerFailuresFilepath,
