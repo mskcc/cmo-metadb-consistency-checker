@@ -244,7 +244,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                         .parse(igoNewRequest.getIncomingTimestamp());
                 Date outgoingTimestamp = new SimpleDateFormat(TIMESTAMP_FORMAT)
                         .parse(consistencyCheckRequest.getIncomingTimestamp());
-                if ((incomingTimestamp.getTime() - outgoingTimestamp.getTime()) > messagingTimeThreshold) {
+                if ((outgoingTimestamp.getTime() - incomingTimestamp.getTime()) > messagingTimeThreshold) {
                     igoNewRequest.setStatusType(StatusType.SUCCESSFUL_PUBLISHING_TIME_EXCEEDED);
                 }
 
@@ -257,19 +257,20 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                 // new request incoming timestamp is greater than specified messaging time threshold
                 // if status is already set as StatusType.FAILED_DROPPED_MESSAGE then assume
                 // we already know that the message has been dropped, no need to log it again
-                if (igoNewRequest.getStatusType().equals(
-                        ConsistencyCheckerRequest.StatusType.FAILED_DROPPED_MESSAGE)) {
-                    continue;
-                }
-                igoNewRequest.setStatusType(
-                        ConsistencyCheckerRequest.StatusType.FAILED_DROPPED_MESSAGE);
-                // update status type in igo new requests concurrent map
-                igoNewRequestMessagesReceived.put(incomingRequestId, igoNewRequest);
-                try {
-                    fileUtil.writeToFile(loggerFile, igoNewRequest.toString() + "\n");
-                } catch (IOException e) {
-                    LOG.error("Error occured during attempt to write "
-                            + "to SMILE consistency checker failures file", e);
+                Date incomingTimestamp = new SimpleDateFormat(TIMESTAMP_FORMAT)
+                        .parse(igoNewRequest.getIncomingTimestamp());
+                Date currentTimestamp = new Date();
+
+                if ((currentTimestamp.getTime() - incomingTimestamp.getTime()) > messagingTimeThreshold) {
+                    igoNewRequest.setStatusType(StatusType.FAILED_DROPPED_MESSAGE);
+                    // update status type in igo new requests concurrent map
+                    igoNewRequestMessagesReceived.put(incomingRequestId, igoNewRequest);
+                    try {
+                        fileUtil.writeToFile(loggerFile, igoNewRequest.toString() + "\n");
+                    } catch (IOException e) {
+                        LOG.error("Error occured during attempt to write "
+                                + "to SMILE consistency checker failures file", e);
+                    }
                 }
             }
         }
