@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.nats.client.Message;
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -43,9 +42,6 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
     private static final Log LOG = LogFactory.getLog(MessageHandlingServiceImpl.class);
     private final String TIMESTAMP_FORMAT = "yyyy.MM.dd.HH.mm.ss";
 
-    @Autowired
-    private FileUtil fileUtil;
-
     @Value("${igo.new_request_topic}")
     private String IGO_NEW_REQUEST_TOPIC;
 
@@ -69,17 +65,6 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
 
     @Autowired
     private JsonComparator jsonComparator;
-
-    private File loggerFile;
-
-    @Autowired
-    private void initFileUtilLogger(@Value("${consistency_checker.request_handling_failures_filepath}")
-        String consistencyCheckerFailuresFilepath) throws Exception {
-        ConsistencyCheckerRequest header = new ConsistencyCheckerRequest();
-        this.loggerFile = fileUtil.getOrCreateFileWithHeader(
-                consistencyCheckerFailuresFilepath,
-                header.getConsistencyCheckerFileHeader());
-    }
 
     // for tracking messages received for each respective topic
     private ConcurrentMap<String, ConsistencyCheckerRequest> igoNewRequestMessagesReceived =
@@ -265,12 +250,6 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                     igoNewRequest.setStatusType(StatusType.FAILED_DROPPED_MESSAGE);
                     // update status type in igo new requests concurrent map
                     igoNewRequestMessagesReceived.put(incomingRequestId, igoNewRequest);
-                    try {
-                        fileUtil.writeToFile(loggerFile, igoNewRequest.toString() + "\n");
-                    } catch (IOException e) {
-                        LOG.error("Error occured during attempt to write "
-                                + "to SMILE consistency checker failures file", e);
-                    }
                 }
             }
         }
@@ -330,9 +309,6 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                         LOG.debug("Removing request from consistency check messages received: "
                                 + request.getRequestId());
                         consistencyCheckerMessagesReceived.remove(request.getRequestId());
-
-                        // save request details to logger file
-                        fileUtil.writeToFile(loggerFile, request.toString() + "\n");
                     }
                     if (interrupted && requestPublishingQueue.isEmpty()) {
                         break;
@@ -386,9 +362,6 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                                     + ", storing details to consistency check failures log file");
                             requestsToCheck.setStatusType(
                                     ConsistencyCheckerRequest.StatusType.FAILED_INCONSISTENT_REQUEST_JSONS);
-
-                            // save details to publishing failure logger
-                            fileUtil.writeToFile(loggerFile, requestsToCheck.toString() + "\n");
                         }
                     }
                     if (interrupted && requestConsistencyCheckingQueue.isEmpty()) {
