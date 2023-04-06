@@ -40,7 +40,7 @@
     <smile_messaging_java.version>1.3.10.RELEASE</smile_messaging_java.version>
     <!-- smile commons centralized config properties -->
     <smile_commons.groupId>com.github.mskcc</smile_commons.groupId>
-    <smile_commons.version>1.3.10.RELEASE</smile_commons.version>
+    <smile_commons.version>1.3.11.RELEASE</smile_commons.version>
   </properties>
 
   <dependencies>
