@@ -3,7 +3,6 @@ package org.mskcc.smile.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.nats.client.Message;
-import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -24,7 +23,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.cmo.messaging.Gateway;
 import org.mskcc.cmo.messaging.MessageConsumer;
-import org.mskcc.smile.commons.FileUtil;
 import org.mskcc.smile.commons.JsonComparator;
 import org.mskcc.smile.model.ConsistencyCheckerRequest;
 import org.mskcc.smile.model.ConsistencyCheckerRequest.StatusType;
@@ -355,14 +353,13 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                             LOG.info("Request passed consistency check and adding to publishing queue: "
                                     + requestsToCheck.getRequestId());
                             requestsToCheck.setStatusType(ConsistencyCheckerRequest.StatusType.SUCCESSFUL);
-                            // only add request to publishing queue if it passed the consistency check
-                            requestPublishingQueue.add(requestsToCheck);
                         } else {
-                            LOG.warn("Request failed consistency check: " + requestsToCheck.getRequestId()
-                                    + ", storing details to consistency check failures log file");
+                            LOG.warn("Request failed consistency check but will still be added to publishing"
+                                    + " queue: " + requestsToCheck.getRequestId());
                             requestsToCheck.setStatusType(
                                     ConsistencyCheckerRequest.StatusType.FAILED_INCONSISTENT_REQUEST_JSONS);
                         }
+                        requestPublishingQueue.add(requestsToCheck);
                     }
                     if (interrupted && requestConsistencyCheckingQueue.isEmpty()) {
                         break;
